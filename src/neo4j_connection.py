@@ -15,8 +15,11 @@ Created on Apr 17, 2019
 class Neo4jConnection(object):
 
     
-    def __init__(self):
-        self.load_config_file()
+    def __init__(self, servername, username, password):
+        #self.load_config_file()
+        self.uri = servername
+        self.username = username
+        self.password = password
         self._driver = GraphDatabase.driver(self.uri, auth=(self.username, self.password))
 
     def close(self):
@@ -59,7 +62,8 @@ class Neo4jConnection(object):
     def does_identifier_exist(self, uuid):
         returnData = self.get_node_by_identifer(uuid)
         return len(returnData) > 0
-        
+     
+    """   
     def load_config_file(self):    
         config = configparser.ConfigParser()
         try:
@@ -94,6 +98,7 @@ class Neo4jConnection(object):
             msg = "Unexpected error:", sys.exc_info()[0]
             print (msg + "  Program stopped.")
             exit(0)
+    """
 
     """Build a Cypher create statement based on the create_record variable.  Extract all the fields and values from the
     create_record.  The type_string denotes what type of Neo4j entity to create.  specific_type_string is the sub-type of
