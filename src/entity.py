@@ -8,7 +8,7 @@ import os
 import sys
 from hubmap_const import HubmapConst 
 from neo4j_connection import Neo4jConnection
-from uuid_generator import getNewUUID
+import uuid_generator
 import configparser
 from hm_auth import AuthCache, AuthHelper
 import pprint
@@ -22,9 +22,10 @@ class Entity(object):
     
     entity_config = {}
 
-    def __init__(self, app_client_id, app_client_secret):
+    def __init__(self, app_client_id, app_client_secret, uuid_webservice_url):
         self.entity_config['APP_CLIENT_ID'] = app_client_id
         self.entity_config['APP_CLIENT_SECRET'] = app_client_secret
+        self.entity_config['UUID_WEBSERVICE_URL'] = uuid_webservice_url
 
     """def load_config_file(self):
         config = configparser.ConfigParser()
@@ -590,8 +591,8 @@ class Entity(object):
         with driver.session() as session:
             tx = None
             try:
-                #TODO: swap with Bill's code
-                file_uuid = getNewUUID()
+                ug = uuid_generator(self.entity_config['UUID_WEBSERVICE_URL'])
+                file_uuid = ug.getNewUUID()
 
                 tx = session.begin_transaction()
                 # step 4: create the entity representing the file
@@ -600,8 +601,7 @@ class Entity(object):
                 stmt = Neo4jConnection.get_create_statement(file_record, HubmapConst.ENTITY_NODE_NAME, HubmapConst.FILE_TYPE_CODE, False)
                 tx.run(stmt)
                 # step 5: create the associated activity
-                #TODO: swap with Bill's code
-                activity_uuid = getNewUUID()
+                activity_uuid = ug.getNewUUID()
                 
                 #TODO: Add provenance data in addition to the TIMESTAMP
                 activity_record = {HubmapConst.UUID_ATTRIBUTE : activity_uuid, HubmapConst.ACTIVITY_TYPE_ATTRIBUTE : HubmapConst.ADD_FILE_ACTIVITY_TYPE_CODE}
@@ -644,8 +644,8 @@ class Entity(object):
             tx = None
             try:
                 # step 2: create the associated activity
-                #TODO: swap with Bill's code
-                activity_uuid = getNewUUID()
+                ug = uuid_generator(self.entity_config['UUID_WEBSERVICE_URL'])
+                activity_uuid = ug.getNewUUID()
                 
                 #TODO: Add provenance data in addition to the TIMESTAMP
                 activity_record = {HubmapConst.UUID_ATTRIBUTE : activity_uuid, HubmapConst.ACTIVITY_TYPE_ATTRIBUTE : HubmapConst.DERIVED_ACTIVITY_TYPE_CODE}

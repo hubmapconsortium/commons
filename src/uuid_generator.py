@@ -59,7 +59,7 @@ class UUID_Generator(object):
     """
     
     def getNewUUID(self, current_token, uuid_type, hubmap_identifier=None, sample_count=1):
-        url = app_config['UUID_WEBSERVICE_URL'] + "?sample_count=" + str(sample_count)
+        url = self.app_config['UUID_WEBSERVICE_URL'] + "?sample_count=" + str(sample_count)
         if current_token == None or len(current_token) == 0:
             raise ValueError("Error in getNewUUID: the token cannot be blank")
         if uuid_type == None or len(uuid_type) == 0:
@@ -89,7 +89,7 @@ class UUID_Generator(object):
             raise e
     
     def getUUID(self, current_token, identifier):
-        url = app_config['UUID_WEBSERVICE_URL'] + "/" + str(identifier)
+        url = self.app_config['UUID_WEBSERVICE_URL'] + "/" + str(identifier)
         if current_token == None or len(current_token) == 0:
             raise ValueError("Error in getNewUUID: the token cannot be blank")
         try:
