@@ -11,7 +11,6 @@ from neo4j_connection import Neo4jConnection
 from uuid_generator import getNewUUID
 import configparser
 import requests
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'common-api'))
 from hubmap_const import HubmapConst 
 from neo4j_connection import Neo4jConnection
 from uuid_generator import getNewUUID
@@ -20,20 +19,21 @@ from hm_auth import AuthHelper, AuthCache
 
 class Provenance:
 
-    md_config = {}
+    provenance_config = {}
     
-    def __init__(self):
-        self.load_config_file()
+    def __init__(self, app_client_id, app_client_secret):
+        self.provenance_config['APP_CLIENT_ID'] = app_client_id
+        self.provenance_config['APP_CLIENT_SECRET'] = app_client_secret
         
-    def load_config_file(self):    
+    """def load_config_file(self):    
         config = configparser.ConfigParser()
         try:
             config.read(os.path.join(os.path.dirname(__file__), '..', 'common-api', 'app.properties'))
-            self.md_config['APP_CLIENT_ID'] = config.get('GLOBUS', 'APP_CLIENT_ID')
-            self.md_config['APP_CLIENT_SECRET'] = config.get('GLOBUS', 'APP_CLIENT_SECRET')
-            self.md_config['STAGING_ENDPOINT_UUID'] = config.get('GLOBUS', 'STAGING_ENDPOINT_UUID')
-            self.md_config['PUBLISH_ENDPOINT_UUID'] = config.get('GLOBUS', 'PUBLISH_ENDPOINT_UUID')
-            self.md_config['SECRET_KEY'] = config.get('GLOBUS', 'SECRET_KEY')
+            self.provenance_config['APP_CLIENT_ID'] = config.get('GLOBUS', 'APP_CLIENT_ID')
+            self.provenance_config['APP_CLIENT_SECRET'] = config.get('GLOBUS', 'APP_CLIENT_SECRET')
+            self.provenance_config['STAGING_ENDPOINT_UUID'] = config.get('GLOBUS', 'STAGING_ENDPOINT_UUID')
+            self.provenance_config['PUBLISH_ENDPOINT_UUID'] = config.get('GLOBUS', 'PUBLISH_ENDPOINT_UUID')
+            self.provenance_config['SECRET_KEY'] = config.get('GLOBUS', 'SECRET_KEY')
             #app.config['DEBUG'] = True
         except OSError as err:
             msg = "OS error.  Check config.ini file to make sure it exists and is readable: {0}".format(err)
@@ -62,6 +62,8 @@ class Provenance:
             print (msg + "  Program stopped.")
             exit(0)
 
+    """
+    
     def get_provenance_data_object(self, token, groupUUID=None):
         provenance_group = None
         try:
@@ -89,7 +91,7 @@ class Provenance:
         authcache = None
         if AuthHelper.isInitialized() == False:
             authcache = AuthHelper.create(
-                self.md_config['appclientid'], self.md_config['appclientsecret'])
+                self.provenance_config['appclientid'], self.provenance_config['appclientsecret'])
         else:
             authcache = AuthHelper.instance()
         userinfo = authcache.getUserInfo(token, True)
@@ -105,7 +107,7 @@ class Provenance:
         authcache = None
         if AuthHelper.isInitialized() == False:
             authcache = AuthHelper.create(
-                self.md_config['APP_CLIENT_ID'], self.md_config['APP_CLIENT_SECRET'])
+                self.provenance_config['APP_CLIENT_ID'], self.provenance_config['APP_CLIENT_SECRET'])
         else:
             authcache = AuthHelper.instance()
         groupinfo = authcache.getHuBMAPGroupInfo()

@@ -22,16 +22,22 @@ class Entity(object):
     
     entity_config = {}
 
-    def __init__(self):
-        self.load_config_file()
+    def __init__(self, app_client_id, app_client_secret):
+        self.entity_config['APP_CLIENT_ID'] = app_client_id
+        self.entity_config['APP_CLIENT_SECRET'] = app_client_secret
 
-    def load_config_file(self):
+    """def load_config_file(self):
         config = configparser.ConfigParser()
         try:
             config.read(os.path.join(os.path.dirname(__file__), '..', 'common-api', 'app.properties'))
+
+            
             self.entity_config['APP_CLIENT_ID'] = config.get('GLOBUS', 'APP_CLIENT_ID')
             self.entity_config['APP_CLIENT_SECRET'] = config.get(
                 'GLOBUS', 'APP_CLIENT_SECRET')
+
+            
+            
             self.entity_config['STAGING_ENDPOINT_UUID'] = config.get(
                 'GLOBUS', 'STAGING_ENDPOINT_UUID')
             self.entity_config['PUBLISH_ENDPOINT_UUID'] = config.get(
@@ -70,7 +76,8 @@ class Entity(object):
             msg = "Unexpected error:", sys.exc_info()[0]
             print(msg + "  Program stopped.")
             exit(0)
-
+    """
+    
     @staticmethod
     # NOTE: This will return a single entity, activity, or agent
     def get_entity(driver, identifier): 

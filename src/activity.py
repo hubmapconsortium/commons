@@ -6,7 +6,6 @@ Created on Sep 1, 2019
 import requests
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'common-api'))
 from hubmap_const import HubmapConst
 from hm_auth import AuthCache, AuthHelper
 from entity import Entity
