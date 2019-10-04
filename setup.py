@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="hubmap-commons",
+    name="hubmap_commons",
     version="0.0.1",
     author="Chuck Borromeo",
     author_email="chb69@pitt.edu",
