@@ -12,8 +12,8 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/hubmapconsortium/commons",
-    #packages=setuptools.find_packages(),
-    py_modules=['activity', 'autherror', 'entity'],
+    package_dir={'': 'src'},
+    packages=[''],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
