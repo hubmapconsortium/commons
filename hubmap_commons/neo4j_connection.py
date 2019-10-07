@@ -63,43 +63,6 @@ class Neo4jConnection(object):
         returnData = self.get_node_by_identifer(uuid)
         return len(returnData) > 0
      
-    """   
-    def load_config_file(self):    
-        config = configparser.ConfigParser()
-        try:
-            config.read(os.path.join(os.path.dirname(__file__), '..', 'common-api', 'app.properties'))
-            self.uri = config.get('NEO4J', 'server')
-            self.username = config.get('NEO4J', 'username')
-            self.password = config.get('NEO4J', 'password')
-            #return { 'server' : server, 'user' : username, 'password' : password }
-        except OSError as err:
-            msg = "OS error.  Check config.ini file to make sure it exists and is readable: {0}".format(err)
-            print (msg + "  Program stopped.")
-            exit(0)
-        except configparser.NoSectionError as noSectError:
-            msg = "Error reading the config.ini file.  Check config.ini file to make sure it matches the structure in config.ini.example: {0}".format(noSectError)
-            print (msg + "  Program stopped.")
-            exit(0)
-        except configparser.NoOptionError as noOptError:
-            msg = "Error reading the config.ini file.  Check config.ini file to make sure it matches the structure in config.ini.example: {0}".format(noOptError)
-            print (msg + "  Program stopped.")
-            exit(0)
-        except SyntaxError as syntaxError:
-            msg = "Error reading the config.ini file.  Check config.ini file to make sure it matches the structure in config.ini.example: {0}".format(syntaxError)
-            msg = msg + "  Cannot read line: {0}".format(syntaxError.text)
-            print (msg + "  Program stopped.")
-            exit(0)        
-        except AttributeError as attrError:
-            msg = "Error reading the config.ini file.  Check config.ini file to make sure it matches the structure in config.ini.example: {0}".format(attrError)
-            msg = msg + "  Cannot read line: {0}".format(attrError.text)
-            print (msg + "  Program stopped.")
-            exit(0)        
-        except:
-            msg = "Unexpected error:", sys.exc_info()[0]
-            print (msg + "  Program stopped.")
-            exit(0)
-    """
-
     """Build a Cypher create statement based on the create_record variable.  Extract all the fields and values from the
     create_record.  The type_string denotes what type of Neo4j entity to create.  specific_type_string is the sub-type of
     the entity.  include_provenance_timestamp is a boolean flag that includes/excludes the TIMESTAMP() method
@@ -212,7 +175,25 @@ class Neo4jConnection(object):
             if attr not in data_record:
                 return False        
         return True
-    
+
+    def check_connection(self, driver):
+        with driver.session() as session:
+            tx = None
+            try:
+                tx = session.begin_transaction()
+                tx.run("CALL db.schema()")
+                tx.close()
+                print("check_connection passed")
+                return True
+            except TransactionError as te:
+                print('A transaction error occurred: ', te.value)
+            except CypherError as cse:
+                print('A Cypher error was encountered: ', cse.message)
+            except:
+                print('A general error occurred: ')
+                for x in sys.exc_info():
+                    print(x)
+
 def build_indices(driver):
     with driver.session() as session:
         tx = None
@@ -238,12 +219,66 @@ def build_indices(driver):
             if tx.closed() == False:
                 tx.rollback()
         
-            
+    
+def load_config_file():
+    entity_config = {}
+    config = configparser.ConfigParser()
+    try:
+        config.read(os.path.join(os.path.dirname(__file__), '..', 'app.properties'))
+        entity_config['neo4juri'] = config.get('NEO4J', 'server')
+        entity_config['neo4jusername'] = config.get('NEO4J', 'username')
+        entity_config['neo4jpassword'] = config.get('NEO4J', 'password')
+        entity_config['APP_CLIENT_ID'] = config.get('GLOBUS', 'APP_CLIENT_ID')
+        entity_config['APP_CLIENT_SECRET'] = config.get(
+            'GLOBUS', 'APP_CLIENT_SECRET')
+        entity_config['STAGING_ENDPOINT_UUID'] = config.get(
+            'GLOBUS', 'STAGING_ENDPOINT_UUID')
+        entity_config['PUBLISH_ENDPOINT_UUID'] = config.get(
+            'GLOBUS', 'PUBLISH_ENDPOINT_UUID')
+        entity_config['SECRET_KEY'] = config.get('GLOBUS', 'SECRET_KEY')
+        entity_config['UUID_UI_URL'] = config.get('HUBMAP', 'UUID_UI_URL')
+        return entity_config
+        #app.config['DEBUG'] = True
+    except OSError as err:
+        msg = "OS error.  Check config.ini file to make sure it exists and is readable: {0}".format(
+            err)
+        print(msg + "  Program stopped.")
+        exit(0)
+    except configparser.NoSectionError as noSectError:
+        msg = "Error reading the config.ini file.  Check config.ini file to make sure it matches the structure in config.ini.example: {0}".format(
+            noSectError)
+        print(msg + "  Program stopped.")
+        exit(0)
+    except configparser.NoOptionError as noOptError:
+        msg = "Error reading the config.ini file.  Check config.ini file to make sure it matches the structure in config.ini.example: {0}".format(
+            noOptError)
+        print(msg + "  Program stopped.")
+        exit(0)
+    except SyntaxError as syntaxError:
+        msg = "Error reading the config.ini file.  Check config.ini file to make sure it matches the structure in config.ini.example: {0}".format(
+            syntaxError)
+        msg = msg + "  Cannot read line: {0}".format(syntaxError.text)
+        print(msg + "  Program stopped.")
+        exit(0)
+    except AttributeError as attrError:
+        msg = "Error reading the config.ini file.  Check config.ini file to make sure it matches the structure in config.ini.example: {0}".format(
+            attrError)
+        msg = msg + "  Cannot read line: {0}".format(attrError.text)
+        print(msg + "  Program stopped.")
+        exit(0)
+    except:
+        msg = "Unexpected error:", sys.exc_info()[0]
+        print(msg + "  Program stopped.")
+        exit(0)
+        
     
 if __name__ == "__main__":
-    conn = Neo4jConnection()
+    entity_config = load_config_file()
+    conn = Neo4jConnection(entity_config['neo4juri'], entity_config['neo4jusername'], entity_config['neo4jpassword'])
+    #conn.load_config_file()
     drv1 = conn.get_driver()
-    build_indices(drv1)
+    conn.check_connection(drv1)
+    #build_indices(drv1)
     #conn.does_identifier_exist('70a43e57-c4fd-4616-ad41-ca8c80d6d827')
     #conn.does_identifier_exist('0ce5be9b-8b7f-47e9-a6d9-16a08df05f50')
     #new_record = {'uuid': '8686865-faaf-4d27-b89c-99999999999', 'label': 'test dataset create file12', 'description': 'description test dataset create file12', 'hasphi': 'true', 'status': 'Published'}
