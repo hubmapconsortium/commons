@@ -110,3 +110,4 @@ venv.bak/
 *.config
 *.conf
 *.ini
+.DS_Store
