@@ -12,7 +12,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/hubmapconsortium/commons",
-    package_dir={'': 'src'},
+    package_dir={'': 'hubmap_commons'},
     packages=[''],
     classifiers=[
         "Programming Language :: Python :: 3",
