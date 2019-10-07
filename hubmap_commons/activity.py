@@ -6,11 +6,11 @@ Created on Sep 1, 2019
 import requests
 import sys
 import os
-from hubmap_const import HubmapConst
-from hm_auth import AuthCache, AuthHelper
-from entity import Entity
-from uuid_generator import getNewUUID
-from neo4j_connection import Neo4jConnection
+from hubmap_commons.hm_auth import AuthCache, AuthHelper
+from hubmap_commons.entity import Entity
+from hubmap_commons.uuid_generator import UUID_Generator
+from hubmap_commons.hubmap_const import HubmapConst 
+from hubmap_commons.neo4j_connection import Neo4jConnection
 
 class Activity:
     
@@ -22,7 +22,7 @@ class Activity:
         activity_uuid_record_list = None
         activity_uuid_record = None
         try:
-            activity_uuid_record_list = getNewUUID(current_token, activity_type)
+            activity_uuid_record_list = UUID_Generator.getNewUUID(current_token, activity_type)
             if (activity_uuid_record_list == None) or (len(activity_uuid_record_list) != 1):
                 raise ValueError("UUID service did not return a value")
             activity_uuid_record = activity_uuid_record_list[0]
@@ -42,7 +42,7 @@ class Activity:
         activity_metadata_uuid_record_list = None
         activity_metadata_uuid_record = None
         try:
-            activity_metadata_uuid_record_list = getNewUUID(current_token, HubmapConst.METADATA_TYPE_CODE)
+            activity_metadata_uuid_record_list = UUID_Generator.getNewUUID(current_token, HubmapConst.METADATA_TYPE_CODE)
             if (activity_metadata_uuid_record_list == None) or (len(activity_metadata_uuid_record_list) != 1):
                 raise ValueError("UUID service did not return a value")
             activity_metadata_uuid_record = activity_metadata_uuid_record_list[0]

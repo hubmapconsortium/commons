@@ -7,8 +7,8 @@ from globus_sdk import AccessTokenAuthorizer, TransferClient, AuthClient
 import configparser
 from pprint import pprint
 from globus_sdk.exc import TransferAPIError
-from hubmap_const import HubmapConst
-from hm_auth import AuthCache, AuthHelper
+from hubmap_commons.hubmap_const import HubmapConst
+from hubmap_commons.hm_auth import AuthCache, AuthHelper
 
 class GlobusFileHelper:
     

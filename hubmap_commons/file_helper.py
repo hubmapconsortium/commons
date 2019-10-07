@@ -3,7 +3,7 @@
 import subprocess
 import os
 import shutil
-import string_helper
+from hubmap_commons import string_helper
 import logging
 
 #checks the fpath parameter to see if the file exists and

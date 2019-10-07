@@ -6,16 +6,13 @@ Created on Sep 1, 2019
 from neo4j import TransactionError, CypherError
 import os
 import sys
-from hubmap_const import HubmapConst 
-from neo4j_connection import Neo4jConnection
-from uuid_generator import getNewUUID
 import configparser
 import requests
-from hubmap_const import HubmapConst 
-from neo4j_connection import Neo4jConnection
-from uuid_generator import getNewUUID
-from entity import Entity
-from hm_auth import AuthHelper, AuthCache
+from hubmap_commons.hubmap_const import HubmapConst 
+from hubmap_commons.neo4j_connection import Neo4jConnection
+from hubmap_commons.uuid_generator import UUID_Generator
+from hubmap_commons.entity import Entity
+from hubmap_commons.hm_auth import AuthHelper, AuthCache
 
 class Provenance:
 

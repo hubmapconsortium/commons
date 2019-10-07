@@ -2,9 +2,11 @@ from neo4j import GraphDatabase
 import configparser
 import sys
 import os
-from hubmap_const import HubmapConst
+from hubmap_commons.hubmap_const import HubmapConst 
 from pprint import pprint 
 from neo4j import TransactionError, CypherError
+
+
 
 '''
 Created on Apr 17, 2019

@@ -9,7 +9,7 @@ import requests
 import json
 import os
 import sys
-from hubmap_const import HubmapConst 
+from hubmap_commons.hubmap_const import HubmapConst 
 from pprint import pprint
 from flask import session
 import configparser

@@ -3,8 +3,7 @@ from flask import Flask, request, session, redirect, url_for, Response, jsonify
 from pprint import pprint
 import globus_sdk #pip import globus_sdk
 import base64
-import hm_auth
-from hm_auth import secured, AuthHelper
+from hubmap_commons.hm_auth import secured, AuthHelper
 
 app = Flask(__name__)
 app.config.from_pyfile('common_app.conf')
@@ -120,7 +119,7 @@ def logout():
 
 if __name__ == "__main__":
     try:
-        hm_auth.hm_application = app 
+        #hm_auth.hm_application = app 
         
         cId = app.config['APP_CLIENT_ID']
         cSecret = app.config['APP_CLIENT_SECRET']

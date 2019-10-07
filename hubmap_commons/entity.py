@@ -6,14 +6,14 @@ Created on Apr 18, 2019
 from neo4j import TransactionError, CypherError
 import os
 import sys
-from hubmap_const import HubmapConst 
-from neo4j_connection import Neo4jConnection
-import uuid_generator
+from hubmap_commons.hubmap_const import HubmapConst 
+from hubmap_commons.neo4j_connection import Neo4jConnection
+from hubmap_commons.uuid_generator import UUID_Generator
 import configparser
-from hm_auth import AuthCache, AuthHelper
+from hubmap_commons.hm_auth import AuthCache, AuthHelper
 import pprint
 from flask import Response
-from autherror import AuthError
+from hubmap_commons.autherror import AuthError
 
 class Entity(object):
     '''
@@ -591,7 +591,7 @@ class Entity(object):
         with driver.session() as session:
             tx = None
             try:
-                ug = uuid_generator(self.entity_config['UUID_WEBSERVICE_URL'])
+                ug = UUID_Generator(self.entity_config['UUID_WEBSERVICE_URL'])
                 file_uuid = ug.getNewUUID()
 
                 tx = session.begin_transaction()
@@ -644,7 +644,7 @@ class Entity(object):
             tx = None
             try:
                 # step 2: create the associated activity
-                ug = uuid_generator(self.entity_config['UUID_WEBSERVICE_URL'])
+                ug = UUID_Generator(self.entity_config['UUID_WEBSERVICE_URL'])
                 activity_uuid = ug.getNewUUID()
                 
                 #TODO: Add provenance data in addition to the TIMESTAMP

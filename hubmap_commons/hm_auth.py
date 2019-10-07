@@ -1,4 +1,4 @@
-import string_helper
+from hubmap_commons import string_helper
 from flask import Response
 import flask
 import base64
@@ -8,7 +8,7 @@ import functools
 import threading
 import json
 import os
-import file_helper
+from hubmap_commons import file_helper
 
 TOKEN_EXPIRATION = 900 #15 minutes
 GLOBUS_GROUP_SCOPE = 'urn:globus:auth:scope:nexus.api.globus.org:groups'
