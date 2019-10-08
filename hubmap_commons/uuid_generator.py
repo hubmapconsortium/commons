@@ -17,9 +17,10 @@ import globus_sdk #pip import globus_sdk
 import base64
 from requests.exceptions import TooManyRedirects
 
-app_config = {}
 
 class UUID_Generator(object):
+    
+    app_config = {}
     
     def __init__(self, uuid_webservice_url):
         self.app_config['UUID_WEBSERVICE_URL'] = uuid_webservice_url
