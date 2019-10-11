@@ -239,8 +239,8 @@ class AuthCache:
     groupsById = {}
     rolesById = {}
     groupLastRefreshed = None
-    groupJsonFilename = file_helper.ensureTrailingSlash('..') + 'hubmap-globus-groups.json'
-    roleJsonFilename = file_helper.ensureTrailingSlash('..') + 'hubmap-globus-roles.json'
+    groupJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + '../hubmap-globus-groups.json'
+    roleJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + '../hubmap-globus-roles.json'
     
     @staticmethod
     def getHMGroups():

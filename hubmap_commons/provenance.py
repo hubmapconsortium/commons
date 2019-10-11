@@ -18,9 +18,11 @@ class Provenance:
 
     provenance_config = {}
     
-    def __init__(self, app_client_id, app_client_secret):
+    def __init__(self, app_client_id, app_client_secret, uuid_webservice_url):
         self.provenance_config['APP_CLIENT_ID'] = app_client_id
         self.provenance_config['APP_CLIENT_SECRET'] = app_client_secret
+        self.provenance_config['UUID_WEBSERVICE_URL'] = uuid_webservice_url
+        
         
     """def load_config_file(self):    
         config = configparser.ConfigParser()
@@ -69,7 +71,7 @@ class Provenance:
             else:
                 #manually find the group id given the current user:
                 group_uuid = None
-                entity = Entity()
+                entity = Entity(self.provenance_config['APP_CLIENT_ID'], self.provenance_config['APP_CLIENT_SECRET'], self.provenance_config['UUID_WEBSERVICE_URL'])
                 group_list = entity.get_user_groups(token)
                 for grp in group_list:
                     if grp['generateuuid'] == True:
