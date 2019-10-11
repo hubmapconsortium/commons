@@ -14,15 +14,21 @@ from hubmap_commons.neo4j_connection import Neo4jConnection
 
 class Activity:
     
-    @staticmethod
-    def get_create_activity_statements(current_token, activity_type, inputUUID, outputUUID, metadata_userinfo, provenance_group):
+    @classmethod
+    def __init__(self, uuid_webservice_url):
+        self.UUID_WEBSERVICE_URL = uuid_webservice_url
+
+    
+    @classmethod
+    def get_create_activity_statements(self, current_token, activity_type, inputUUID, outputUUID, metadata_userinfo, provenance_group):
         ret_object = {}
         stmt_list = []
         # create the Activity Entity node
         activity_uuid_record_list = None
         activity_uuid_record = None
+        ug = UUID_Generator(self.UUID_WEBSERVICE_URL)
         try:
-            activity_uuid_record_list = UUID_Generator.getNewUUID(current_token, activity_type)
+            activity_uuid_record_list = ug.UUID_Generator.getNewUUID(current_token, activity_type)
             if (activity_uuid_record_list == None) or (len(activity_uuid_record_list) != 1):
                 raise ValueError("UUID service did not return a value")
             activity_uuid_record = activity_uuid_record_list[0]
@@ -42,7 +48,7 @@ class Activity:
         activity_metadata_uuid_record_list = None
         activity_metadata_uuid_record = None
         try:
-            activity_metadata_uuid_record_list = UUID_Generator.getNewUUID(current_token, HubmapConst.METADATA_TYPE_CODE)
+            activity_metadata_uuid_record_list = ug.UUID_Generator.getNewUUID(current_token, HubmapConst.METADATA_TYPE_CODE)
             if (activity_metadata_uuid_record_list == None) or (len(activity_metadata_uuid_record_list) != 1):
                 raise ValueError("UUID service did not return a value")
             activity_metadata_uuid_record = activity_metadata_uuid_record_list[0]
@@ -61,8 +67,8 @@ class Activity:
         ret_object['statements'] = stmt_list
         return ret_object
     
-    @staticmethod
-    def get_create_activity_metadata_statement(activity_metadata_record, activity_metadata_uuid_record, activity_uuid_record, metadata_userinfo, provenance_group):
+    @classmethod
+    def get_create_activity_metadata_statement(self, activity_metadata_record, activity_metadata_uuid_record, activity_uuid_record, metadata_userinfo, provenance_group):
         activity_metadata_record[HubmapConst.UUID_ATTRIBUTE] = activity_metadata_uuid_record[HubmapConst.UUID_ATTRIBUTE]
         activity_metadata_record[HubmapConst.ENTITY_TYPE_ATTRIBUTE] = HubmapConst.METADATA_TYPE_CODE
         activity_metadata_record[HubmapConst.REFERENCE_UUID_ATTRIBUTE] = activity_uuid_record[HubmapConst.UUID_ATTRIBUTE]

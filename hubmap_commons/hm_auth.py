@@ -239,8 +239,8 @@ class AuthCache:
     groupsById = {}
     rolesById = {}
     groupLastRefreshed = None
-    groupJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-globus-groups.json'
-    roleJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-globus-roles.json'
+    groupJsonFilename = file_helper.ensureTrailingSlash('..') + 'hubmap-globus-groups.json'
+    roleJsonFilename = file_helper.ensureTrailingSlash('..') + 'hubmap-globus-roles.json'
     
     @staticmethod
     def getHMGroups():
@@ -387,3 +387,7 @@ class AuthCache:
         if not 'active' in jsonResp or not jsonResp['active']:
             return Response("Login session not active.", 401)
 
+if __name__ == "__main__":
+    group_list = AuthCache.getHMGroups()
+    print(group_list)
+    
