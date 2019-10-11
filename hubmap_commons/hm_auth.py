@@ -9,6 +9,7 @@ import threading
 import json
 import os
 from hubmap_commons import file_helper
+import pprint
 
 TOKEN_EXPIRATION = 900 #15 minutes
 GLOBUS_GROUP_SCOPE = 'urn:globus:auth:scope:nexus.api.globus.org:groups'
@@ -127,6 +128,7 @@ class AuthHelper:
             try:
                 tokens = json.loads(jsonTokens)
             except Exception as e:
+                print("ERROR!: " + str(e))
                 return Response("Error decoding json included in Mauthorization header", 401)    
             return tokens
         
@@ -207,9 +209,9 @@ class AuthHelper:
     def getUserInfo(self, token, getGroups = False):
         userInfo = AuthCache.getUserInfo(self.getApplicationKey(), token, getGroups)
         
-        if isinstance(token, Response):
+        if isinstance(userInfo, Response):
             return userInfo
-        
+                
         if not isinstance(userInfo, dict) or not 'active' in userInfo or userInfo['active'] is None:
             return Response("Nonactive or invalid auth token", 401)
         
@@ -239,8 +241,8 @@ class AuthCache:
     groupsById = {}
     rolesById = {}
     groupLastRefreshed = None
-    groupJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + '../hubmap-globus-groups.json'
-    roleJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + '../hubmap-globus-roles.json'
+    groupJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-globus-groups.json'
+    roleJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-globus-roles.json'
     
     @staticmethod
     def getHMGroups():
@@ -382,7 +384,8 @@ class AuthCache:
                 return jsonResp
             else:
                 return Response("Non-active login", 401)
-        except:
+        except Exception as e:
+            print("ERROR!: " + str(e))            
             return Response("Unable to parse json response on user introspect", 500)
         if not 'active' in jsonResp or not jsonResp['active']:
             return Response("Login session not active.", 401)
