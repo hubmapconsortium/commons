@@ -9,7 +9,7 @@ import sys
 import configparser
 import requests
 import traceback
-import pprint
+from pprint import pprint
 import json
 
 from hubmap_commons.hubmap_const import HubmapConst 
@@ -185,7 +185,7 @@ class Provenance:
                     except Exception as e:
                         print("ERROR!: " + str(e))
       
-                pprint(return_data)        
+                #pprint(return_data)        
                 return return_data
             except ConnectionError as ce:
                 print('A connection error occurred: ', str(ce.args[0]))
