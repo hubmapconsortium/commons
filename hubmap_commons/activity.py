@@ -28,7 +28,7 @@ class Activity:
         activity_uuid_record = None
         ug = UUID_Generator(self.UUID_WEBSERVICE_URL)
         try:
-            activity_uuid_record_list = ug.UUID_Generator.getNewUUID(current_token, activity_type)
+            activity_uuid_record_list = ug.getNewUUID(current_token, activity_type)
             if (activity_uuid_record_list == None) or (len(activity_uuid_record_list) != 1):
                 raise ValueError("UUID service did not return a value")
             activity_uuid_record = activity_uuid_record_list[0]
@@ -48,7 +48,7 @@ class Activity:
         activity_metadata_uuid_record_list = None
         activity_metadata_uuid_record = None
         try:
-            activity_metadata_uuid_record_list = ug.UUID_Generator.getNewUUID(current_token, HubmapConst.METADATA_TYPE_CODE)
+            activity_metadata_uuid_record_list = ug.getNewUUID(current_token, HubmapConst.METADATA_TYPE_CODE)
             if (activity_metadata_uuid_record_list == None) or (len(activity_metadata_uuid_record_list) != 1):
                 raise ValueError("UUID service did not return a value")
             activity_metadata_uuid_record = activity_metadata_uuid_record_list[0]

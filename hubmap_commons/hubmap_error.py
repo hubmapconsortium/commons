@@ -8,6 +8,7 @@ class HubmapError(Exception):
         # Call the base class constructor with the parameters it needs
         super().__init__(message)
 
+        # TODO maybe check if errors is None.  If it is None, try using traceback 
         self.errors = errors
         
     def getJson(self):
