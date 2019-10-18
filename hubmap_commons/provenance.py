@@ -172,7 +172,13 @@ class Provenance:
                             to_node = node_dict[to_uuid]
                             if rel_record['rel_data']['type'] == HubmapConst.HAS_METADATA_REL:
                                 # assign the metadata node as the metadata attribute
-                                from_node['metadata'] = to_node
+                                # just extract the provenance information from the metadata node
+                                from_node['provenance_data'] = {HubmapConst.PROVENANCE_CREATE_TIMESTAMP_ATTRIBUTE : to_node[HubmapConst.PROVENANCE_CREATE_TIMESTAMP_ATTRIBUTE],
+                                                         HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE : to_node[HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE],
+                                                         HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE : to_node[HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE],
+                                                         HubmapConst.PROVENANCE_MODIFIED_TIMESTAMP_ATTRIBUTE : to_node[HubmapConst.PROVENANCE_MODIFIED_TIMESTAMP_ATTRIBUTE],
+                                                         HubmapConst.PROVENANCE_SUB_ATTRIBUTE : to_node[HubmapConst.PROVENANCE_SUB_ATTRIBUTE],
+                                                         HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE : to_node[HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE]}
                                 # remove metadata from list
                                 # this is done to avoid returning a list of nodes that are already connected to one another
                                 node_dict.pop(to_uuid)
