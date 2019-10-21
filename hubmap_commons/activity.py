@@ -20,7 +20,7 @@ class Activity:
 
     
     @classmethod
-    def get_create_activity_statements(self, current_token, activity_type, inputUUID, outputUUID, metadata_userinfo, provenance_group):
+    def get_create_activity_statements(self, current_token, activity_type, inputUUID_list, outputUUID, metadata_userinfo, provenance_group):
         ret_object = {}
         stmt_list = []
         # create the Activity Entity node
@@ -60,8 +60,9 @@ class Activity:
         stmt_list.append(stmt)
         stmt = Neo4jConnection.create_relationship_statement(ret_object['activity_uuid'][HubmapConst.UUID_ATTRIBUTE], HubmapConst.HAS_METADATA_REL, ret_object['activity_metadata_uuid'][HubmapConst.UUID_ATTRIBUTE])
         stmt_list.append(stmt)
-        stmt = Neo4jConnection.create_relationship_statement(inputUUID, HubmapConst.ACTIVITY_INPUT_REL, ret_object['activity_uuid'][HubmapConst.UUID_ATTRIBUTE])
-        stmt_list.append(stmt)
+        for inputUUID in inputUUID_list:
+            stmt = Neo4jConnection.create_relationship_statement(inputUUID, HubmapConst.ACTIVITY_INPUT_REL, ret_object['activity_uuid'][HubmapConst.UUID_ATTRIBUTE])
+            stmt_list.append(stmt)
         stmt = Neo4jConnection.create_relationship_statement(ret_object['activity_uuid'][HubmapConst.UUID_ATTRIBUTE], HubmapConst.ACTIVITY_OUTPUT_REL, outputUUID)
         stmt_list.append(stmt)
         ret_object['statements'] = stmt_list
