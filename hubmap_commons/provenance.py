@@ -11,6 +11,12 @@ import requests
 import traceback
 from pprint import pprint
 import json
+import prov
+from prov.model import ProvDocument
+import datetime
+from pytz import timezone
+import pytz
+
 
 from hubmap_commons.hubmap_const import HubmapConst 
 from hubmap_commons.neo4j_connection import Neo4jConnection
@@ -18,8 +24,20 @@ from hubmap_commons.uuid_generator import UUID_Generator
 from hubmap_commons.entity import Entity
 from hubmap_commons.hm_auth import AuthHelper, AuthCache
 
-class Provenance:
+class ProvConst(object):
+    PROV_ENTITY_TYPE = 'prov:Entity'
+    PROV_ACTIVITY_TYPE = 'prov:Activity'
+    PROV_AGENT_TYPE = 'prov:Agent'
+    PROV_COLLECTION_TYPE = 'prov:Collection'
+    PROV_ORGANIZATION_TYPE = 'prov:Organization'
+    PROV_PERSON_TYPE = 'prov:Person'
+    PROV_LABEL_ATTRIBUTE = 'prov:label'
+    PROV_TYPE_ATTRIBUTE = 'prov:type'
+    PROV_GENERATED_TIME_ATTRIBUTE = 'prov:generatedAtTime'
+    #prov:generatedAtTime "2012-04-03T13:35:23"^^xsd:dateTime;
 
+class Provenance:
+    
     provenance_config = {}
     
     def __init__(self, app_client_id, app_client_secret, uuid_webservice_url):
@@ -92,13 +110,21 @@ class Provenance:
                         if provenance_group != None:
                             ValueError('Error: Current user is a member of multiple groups allowed to create new entities.  The user must select which one to use')
                         provenance_group = self.get_group_by_identifier(groupUUID)
-                        break    
+                        
+                        
+                        #TODO: THIS IS HARDCODED!!  WE NEED TO CHANGE THIS TO TRACK TEST GROUPS DIFFERENTLY
+                        
+                        # for now if the group is the IEC Testing group, keep looking for a different group
+                        # only use the IEC Testing group if no other writable group is found for the user
+                        # NOTE: this code will simply return the first writable group it encounters
+                        if groupUUID != '5bd084c8-edc2-11e8-802f-0e368f3075e8':
+                            break    
                 if groupUUID == None:
                     raise ValueError('Unauthorized: Current user is not a member of a group allowed to create new entities')
         except ValueError as ve:
             raise ve
         ret_provenance_group = {HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE : groupUUID, 
-                                   HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE: provenance_group[HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE]}
+                                   HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE: provenance_group['displayname']}
         authcache = None
         if AuthHelper.isInitialized() == False:
             authcache = AuthHelper.create(
@@ -106,9 +132,9 @@ class Provenance:
         else:
             authcache = AuthHelper.instance()
         userinfo = authcache.getUserInfo(token, True)
-        ret_provenance_group[HubmapConst.PROVENANCE_SUB_ATTRIBUTE] = userinfo[HubmapConst.PROVENANCE_SUB_ATTRIBUTE]
-        ret_provenance_group[HubmapConst.PROVENANCE_USER_EMAIL_ATTRIBUTE] = userinfo[HubmapConst.PROVENANCE_USER_EMAIL_ATTRIBUTE]
-        ret_provenance_group[HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE] = userinfo[HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE]
+        ret_provenance_group[HubmapConst.PROVENANCE_SUB_ATTRIBUTE] = userinfo['sub']
+        ret_provenance_group[HubmapConst.PROVENANCE_USER_EMAIL_ATTRIBUTE] = userinfo['email']
+        ret_provenance_group[HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE] = userinfo['name']
         return ret_provenance_group
     
     
@@ -135,6 +161,9 @@ class Provenance:
     
     def get_provenance_history(self, driver, uuid, depth):
         return_data = {}
+        prov_doc = ProvDocument()
+        prov_doc.add_namespace('ex', 'http://example.org')
+        prov_doc.add_namespace('hubmap', 'https://hubmapconsortium.org')
         updated_node_list = []
         relation_list = []
         with driver.session() as session:
@@ -163,6 +192,48 @@ class Provenance:
                         # pack the nodes into a dictionary using the uuid as a key
                         for node_record in record['nodes']:
                             node_dict[node_record['uuid']] = node_record
+ 
+                            """
+                              "398400024fda58e293cdb435db3c777e": {
+                                  "display_doi": "HBM756.PMTZ.842",
+                                  "doi": "756PMTZ842",
+                                  "entitytype": "Sample",
+                                  "hubmap_identifier": "TEST0016-LV",
+                                  "label": "Entity",
+                                  "metadata": {
+                                    "entitytype": "Metadata",
+                                    "label": "Metadata",
+                                    "organ": "LV",
+                                    "protocols": [
+                                      {
+                                        "id": "protocol_1",
+                                        "protocol_url": "http://protocols.io/vaijroirwjv",
+                                        "protocol_file": ""
+                                      }
+                                    ],
+                                    "provenance_create_timestamp": 1570131434442,
+                                    "provenance_group_name": "hubmap-testing",
+                                    "provenance_group_uuid": "5bd084c8-edc2-11e8-802f-0e368f3075e8",
+                                    "provenance_modified_timestamp": 1570131434442,
+                                    "provenance_user_displayname": "Chuck Borromeo",
+                                    "provenance_user_email": "chuck.hubmaptest@gmail.com",
+                                    "provenance_user_sub": "a79606b3-e9be-4f1b-a01f-4aa1e8b900d8",
+                                    "reference_uuid": [
+                                      "398400024fda58e293cdb435db3c777e"
+                                    ],
+                                    "source_uuid": "HBM334.ZZXR.329",
+                                    "specimen_type": "organ",
+                                    "uuid": "673520f8fb45f2533c99819106e9d24d"
+                                  },
+                                  "next_identifier": "1",
+                                  "provenance_create_timestamp": 1570131434425,
+                                  "provenance_modified_timestamp": 1570131434425,
+                                  "uuid": "398400024fda58e293cdb435db3c777e"
+                                },
+                            """
+ 
+ 
+ 
                         
                         # now, connect the nodes
                         for rel_record in record['relationships']:
@@ -179,9 +250,8 @@ class Provenance:
                                                          HubmapConst.PROVENANCE_MODIFIED_TIMESTAMP_ATTRIBUTE : to_node[HubmapConst.PROVENANCE_MODIFIED_TIMESTAMP_ATTRIBUTE],
                                                          HubmapConst.PROVENANCE_SUB_ATTRIBUTE : to_node[HubmapConst.PROVENANCE_SUB_ATTRIBUTE],
                                                          HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE : to_node[HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE]}
-                                # remove metadata from list
-                                # this is done to avoid returning a list of nodes that are already connected to one another
-                                node_dict.pop(to_uuid)
+                                #d1.entity('govftp:oesm11st.zip', {'prov:label': 'employment-stats-2011', 'prov:type': 'void:Dataset'})
+                                prov_doc.entity('ex:' + str(from_node['uuid']), other_attributes)
                             elif rel_record['rel_data']['type'] in [HubmapConst.ACTIVITY_OUTPUT_REL, HubmapConst.ACTIVITY_INPUT_REL]:
                                 # for now, simply create a "relation" where the fromNode's uuid is connected to a toNode's uuid via a relationship:
                                 # ex: {'fromNodeUUID': '42e10053358328c9079f1c8181287b6d', 'relationship': 'ACTIVITY_OUTPUT', 'toNodeUUID': '398400024fda58e293cdb435db3c777e'}
@@ -208,11 +278,21 @@ class Provenance:
     
 
 if __name__ == "__main__":    
-    confdata = Provenance.load_config_file()
+    """confdata = Provenance.load_config_file()
     conn = Neo4jConnection(confdata['neo4juri'], confdata['neo4jusername'], confdata['neo4jpassword'])
     driver = conn.get_driver()
     prov = Provenance(confdata['appclientid'], confdata['appclientsecret'], confdata['UUID_WEBSERVICE_URL'])
     uuid = '398400024fda58e293cdb435db3c777e'
+    uuid = 'd6be7b5ec50dacd4e8faf45c78e4b7c9'
     history_data = prov.get_provenance_history(driver, uuid, 4)
-    pprint(history_data)
+    pprint(history_data)"""
+    
+    your_timestamp = 1571248740444
+    eastern = timezone('US/Eastern')
+    date = datetime.datetime.fromtimestamp(your_timestamp / 1e3)
+    localized_timestamp = eastern.localize(date)
+    #utc_dt.replace(tzinfo=timezone.utc).astimezone(tz=None)
+    #date.replace(tzinfo=timezone.utc).astimezone(tz=None)
+    #pprint(localized_timestamp)
+    
     
