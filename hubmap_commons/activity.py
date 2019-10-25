@@ -81,8 +81,21 @@ class Activity:
         activity_metadata_record[HubmapConst.PROVENANCE_USER_EMAIL_ATTRIBUTE] = metadata_userinfo[HubmapConst.PROVENANCE_USER_EMAIL_ATTRIBUTE]
         activity_metadata_record[HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE] = metadata_userinfo[
             HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE]
-        activity_metadata_record[HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE] = provenance_group[HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE]
-        activity_metadata_record[HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE] = provenance_group[HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE]
+        # do some processing to handle older provenance_group objects:
+        prov_group_name = None
+        prov_group_uuid = None
+        if HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE in provenance_group:
+            prov_group_name = provenance_group[HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE]
+        else:
+            prov_group_name = provenance_group['displayname']
+            
+        if HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE in provenance_group:
+            prov_group_name = provenance_group[HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE]
+        else:
+            prov_group_name = provenance_group['uuid']
+                        
+        activity_metadata_record[HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE] = prov_group_name
+        activity_metadata_record[HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE] = prov_group_uuid
         stmt = Neo4jConnection.get_create_statement(
             activity_metadata_record, HubmapConst.METADATA_NODE_NAME, HubmapConst.METADATA_TYPE_CODE, True)
         return stmt
