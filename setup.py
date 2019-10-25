@@ -15,7 +15,8 @@ setup(
     packages=['hubmap_commons'],
     package_data={'':['*.json']},
     include_package_data=True,
-    install_requires=['prov','pytz'],
+    install_requires=['prov','pytz','flask_cors','property','mysql-connector-python',
+                      'flask', 'globus-sdk', 'urllib3', 'neo4j'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -23,3 +24,4 @@ setup(
     ],
     python_requires='>=3.6',
 )
+
