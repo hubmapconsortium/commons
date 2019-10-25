@@ -64,18 +64,7 @@ class Activity:
         stmt_list.append(stmt)
         stmt = Neo4jConnection.create_relationship_statement(ret_object['activity_uuid'][HubmapConst.UUID_ATTRIBUTE], HubmapConst.HAS_METADATA_REL, ret_object['activity_metadata_uuid'][HubmapConst.UUID_ATTRIBUTE])
         stmt_list.append(stmt)
-        
-        print('!!!!!!!!!!!!!!!!!!HERE IS THE LIST!!!!!!!!!!!!!!!!')
-        pprint(inputUUID_list)
-        
-        
         for inputUUID in inputUUID_list:
-
-            
-            print('!!!!!!!!!!!!!!!!!!HERE IS THE ITEM!!!!!!!!!!!!!!!!')
-            pprint(inputUUID)
-
-            
             stmt = Neo4jConnection.create_relationship_statement(inputUUID, HubmapConst.ACTIVITY_INPUT_REL, ret_object['activity_uuid'][HubmapConst.UUID_ATTRIBUTE])
             stmt_list.append(stmt)
         stmt = Neo4jConnection.create_relationship_statement(ret_object['activity_uuid'][HubmapConst.UUID_ATTRIBUTE], HubmapConst.ACTIVITY_OUTPUT_REL, outputUUID)
