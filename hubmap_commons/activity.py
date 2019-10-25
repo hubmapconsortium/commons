@@ -83,8 +83,8 @@ class Activity:
         ret_object['statements'] = stmt_list
         return ret_object
     
-    @classmethod
-    def get_create_activity_metadata_statement(self, activity_metadata_record, activity_metadata_uuid_record, activity_uuid_record, metadata_userinfo, provenance_group):
+    @staticmethod
+    def get_create_activity_metadata_statement(activity_metadata_record, activity_metadata_uuid_record, activity_uuid_record, metadata_userinfo, provenance_group):
         activity_metadata_record[HubmapConst.UUID_ATTRIBUTE] = activity_metadata_uuid_record[HubmapConst.UUID_ATTRIBUTE]
         activity_metadata_record[HubmapConst.ENTITY_TYPE_ATTRIBUTE] = HubmapConst.METADATA_TYPE_CODE
         activity_metadata_record[HubmapConst.REFERENCE_UUID_ATTRIBUTE] = activity_uuid_record[HubmapConst.UUID_ATTRIBUTE]
@@ -92,8 +92,8 @@ class Activity:
         activity_metadata_record[HubmapConst.PROVENANCE_USER_EMAIL_ATTRIBUTE] = metadata_userinfo[HubmapConst.PROVENANCE_USER_EMAIL_ATTRIBUTE]
         activity_metadata_record[HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE] = metadata_userinfo[
             HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE]
-        activity_metadata_record[HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE] = provenance_group['name']
-        activity_metadata_record[HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE] = provenance_group['uuid']
+        activity_metadata_record[HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE] = provenance_group[HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE]
+        activity_metadata_record[HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE] = provenance_group[HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE]
         stmt = Neo4jConnection.get_create_statement(
             activity_metadata_record, HubmapConst.METADATA_NODE_NAME, HubmapConst.METADATA_TYPE_CODE, True)
         return stmt
