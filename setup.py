@@ -15,6 +15,7 @@ setup(
     packages=['hubmap_commons'],
     package_data={'':['*.json']},
     include_package_data=True,
+    install_requires=['prov','pytz'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
