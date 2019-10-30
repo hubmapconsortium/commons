@@ -71,12 +71,14 @@ class HubmapConst(object):
     PROTOCOL_FILE_METADATA_ATTRIBUTE = 'protocols'
     #PROTOCOL_FILE_METADATA_ATTRIBUTE = 'protocol_file_metadata'
     METADATA_FILE_ATTRIBUTE = 'metadata_file'
+    METADATAS_ATTRIBUTE = 'metadatas'
     SPECIMEN_TYPE_ATTRIBUTE = 'specimen_type'
     LAB_IDENTIFIER_ATTRIBUTE = 'hubmap_identifier'
     NEXT_IDENTIFIER_ATTRIBUTE = 'next_identifier'
     DATASET_GLOBUS_DIRECTORY_PATH_ATTRIBUTE = 'globus_directory_url_path'
     DATASET_LOCAL_DIRECTORY_PATH_ATTRIBUTE = 'local_directory_url_path'
     ORGAN_TYPE_ATTRIBUTE = 'organ'
+    SOURCE_UUID_ATTRIBUTE = 'source_uuid'
     
     
     #Organ Specifiers
