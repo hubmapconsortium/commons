@@ -12,7 +12,8 @@ import traceback
 from pprint import pprint
 import json
 import prov
-from prov.model import ProvDocument
+from prov.model import ProvDocument, PROV_TYPE
+from prov.serializers.provjson import ProvJSONSerializer
 import datetime
 from pytz import timezone
 import pytz
@@ -23,6 +24,10 @@ from hubmap_commons.neo4j_connection import Neo4jConnection
 from hubmap_commons.uuid_generator import UUID_Generator
 from hubmap_commons.entity import Entity
 from hubmap_commons.hm_auth import AuthHelper, AuthCache
+from builtins import staticmethod
+from test.test_funcattrs import StaticMethodAttrsTest
+
+
 
 class ProvConst(object):
     PROV_ENTITY_TYPE = 'prov:Entity'
@@ -34,11 +39,37 @@ class ProvConst(object):
     PROV_LABEL_ATTRIBUTE = 'prov:label'
     PROV_TYPE_ATTRIBUTE = 'prov:type'
     PROV_GENERATED_TIME_ATTRIBUTE = 'prov:generatedAtTime'
-    #prov:generatedAtTime "2012-04-03T13:35:23"^^xsd:dateTime;
+
+    HUBMAP_DOI_ATTRIBUTE = 'hubmap:doi' #the doi concept here might be a good alternative: https://sparontologies.github.io/datacite/current/datacite.html
+    HUBMAP_DISPLAY_DOI_ATTRIBUTE = 'hubmap:displayDOI' 
+    HUBMAP_SPECIMEN_TYPE_ATTRIBUTE = 'hubmap:specimenType' 
+    HUBMAP_DISPLAY_IDENTIFIER_ATTRIBUTE = 'hubmap:displayIdentifier' 
+    HUBMAP_UUID_ATTRIBUTE = 'hubmap:uuid' 
+    #HUBMAP_SOURCE_UUID_ATTRIBUTE = 'hubmap:sourceUUID'
+    HUBMAP_METADATA_ATTRIBUTE = 'hubmap:metadata'
+    HUBMAP_MODIFIED_TIMESTAMP = 'hubmap:modifiedTimestamp'
+    HUBMAP_PROV_GROUP_NAME = 'hubmap:groupName'
+    HUBMAP_PROV_GROUP_UUID = 'hubmap:groupUUID'
+    HUBMAP_PROV_USER_DISPLAY_NAME = 'hubmap:userDisplayName'
+    HUBMAP_PROV_USER_EMAIL = 'hubmap:userEmail'
+    HUBMAP_PROV_USER_UUID = 'hubmap:userUUID'
+     
 
 class Provenance:
     
     provenance_config = {}
+    
+    metadata_ignore_attributes = [HubmapConst.ENTITY_TYPE_ATTRIBUTE, HubmapConst.PROVENANCE_CREATE_TIMESTAMP_ATTRIBUTE, HubmapConst.REFERENCE_UUID_ATTRIBUTE, 
+                                  HubmapConst.UUID_ATTRIBUTE, HubmapConst.SOURCE_UUID_ATTRIBUTE, HubmapConst.NAME_ATTRIBUTE]
+    
+    known_attribute_map = {HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE : ProvConst.HUBMAP_PROV_GROUP_NAME, HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE : ProvConst.HUBMAP_PROV_GROUP_UUID,
+                           HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE: ProvConst.HUBMAP_PROV_USER_DISPLAY_NAME, HubmapConst.PROVENANCE_USER_EMAIL_ATTRIBUTE: ProvConst.HUBMAP_PROV_USER_EMAIL,
+                           HubmapConst.PROVENANCE_SUB_ATTRIBUTE : ProvConst.HUBMAP_PROV_USER_UUID, HubmapConst.PROVENANCE_MODIFIED_TIMESTAMP_ATTRIBUTE : ProvConst.HUBMAP_MODIFIED_TIMESTAMP}
+
+    agent_attribute_map = {HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE: ProvConst.HUBMAP_PROV_USER_DISPLAY_NAME, HubmapConst.PROVENANCE_USER_EMAIL_ATTRIBUTE: ProvConst.HUBMAP_PROV_USER_EMAIL,
+                           HubmapConst.PROVENANCE_SUB_ATTRIBUTE : ProvConst.HUBMAP_PROV_USER_UUID}
+    
+    organization_attribute_map = {HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE : ProvConst.HUBMAP_PROV_GROUP_NAME, HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE : ProvConst.HUBMAP_PROV_GROUP_UUID}
     
     def __init__(self, app_client_id, app_client_secret, uuid_webservice_url):
         self.provenance_config['APP_CLIENT_ID'] = app_client_id
@@ -159,22 +190,34 @@ class Provenance:
                     return group
         raise ValueError("cannot find a Hubmap group matching: [" + identifier + "]")
     
-    def get_provenance_history(self, driver, uuid, depth):
-        return_data = {}
+    def get_provenance_history(self, driver, uuid, depth=None):
         prov_doc = ProvDocument()
-        prov_doc.add_namespace('ex', 'http://example.org')
-        prov_doc.add_namespace('hubmap', 'https://hubmapconsortium.org')
-        updated_node_list = []
+        prov_doc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
+        prov_doc.add_namespace('ex', 'http://example.org/')
+        prov_doc.add_namespace('hubmap', 'https://hubmapconsortium.org/')
+        prov_doc.add_namespace('dct', 'http://purl.org/dc/terms/')
+        prov_doc.add_namespace('foaf','http://xmlns.com/foaf/0.1/')
         relation_list = []
         with driver.session() as session:
             try:
-                
+                # max_level_str is the string used to put a limit on the number of levels to traverse
+                max_level_str = ''
+                if depth is not None and len(str(depth)) > 0:
+                    max_level_str = """maxLevel: {depth},""".format(depth=depth)
+
+                """
+                Basically this Cypher query returns a collection of nodes and relationships.  The relationships include ACTIVITY_INPUT, ACTIVITY_OUTPUT and
+                HAS_METADATA.  First, we build a dictionary of the nodes using uuid as a key.  Next, we loop through the relationships looking for HAS_METADATA 
+                relationships.  The HAS_METADATA relationships connect the Entity nodes with their metadata.  The data from the Metadata node
+                becomes the 'metadata' attribute for the Entity node.
+                """
+
                 stmt = """MATCH (n:Entity {{ uuid: '{uuid}' }}) 
-                CALL apoc.path.subgraphAll(n, {{ maxLevel: {depth}, relationshipFilter:'<ACTIVITY_INPUT|<ACTIVITY_OUTPUT|HAS_METADATA' }}) YIELD nodes, relationships
+                CALL apoc.path.subgraphAll(n, {{ {max_level_str} relationshipFilter:'<ACTIVITY_INPUT|<ACTIVITY_OUTPUT|HAS_METADATA' }}) YIELD nodes, relationships
                 WITH [node in nodes | node {{ .*, label:labels(node)[0] }} ] as nodes, 
                      [rel in relationships | rel {{ .*, fromNode: {{ label:labels(startNode(rel))[0], uuid:startNode(rel).uuid }} , toNode: {{ label:labels(endNode(rel))[0], uuid:endNode(rel).uuid }}, rel_data: {{ type: type(rel) }} }} ] as rels
                 WITH {{ nodes:nodes, relationships:rels }} as json
-                RETURN json""".format(uuid=uuid, depth=depth)
+                RETURN json""".format(uuid=uuid, max_level_str=max_level_str)
                 
                 result = session.run(stmt)
                 
@@ -192,49 +235,12 @@ class Provenance:
                         # pack the nodes into a dictionary using the uuid as a key
                         for node_record in record['nodes']:
                             node_dict[node_record['uuid']] = node_record
- 
-                            """
-                              "398400024fda58e293cdb435db3c777e": {
-                                  "display_doi": "HBM756.PMTZ.842",
-                                  "doi": "756PMTZ842",
-                                  "entitytype": "Sample",
-                                  "hubmap_identifier": "TEST0016-LV",
-                                  "label": "Entity",
-                                  "metadata": {
-                                    "entitytype": "Metadata",
-                                    "label": "Metadata",
-                                    "organ": "LV",
-                                    "protocols": [
-                                      {
-                                        "id": "protocol_1",
-                                        "protocol_url": "http://protocols.io/vaijroirwjv",
-                                        "protocol_file": ""
-                                      }
-                                    ],
-                                    "provenance_create_timestamp": 1570131434442,
-                                    "provenance_group_name": "hubmap-testing",
-                                    "provenance_group_uuid": "5bd084c8-edc2-11e8-802f-0e368f3075e8",
-                                    "provenance_modified_timestamp": 1570131434442,
-                                    "provenance_user_displayname": "Chuck Borromeo",
-                                    "provenance_user_email": "chuck.hubmaptest@gmail.com",
-                                    "provenance_user_sub": "a79606b3-e9be-4f1b-a01f-4aa1e8b900d8",
-                                    "reference_uuid": [
-                                      "398400024fda58e293cdb435db3c777e"
-                                    ],
-                                    "source_uuid": "HBM334.ZZXR.329",
-                                    "specimen_type": "organ",
-                                    "uuid": "673520f8fb45f2533c99819106e9d24d"
-                                  },
-                                  "next_identifier": "1",
-                                  "provenance_create_timestamp": 1570131434425,
-                                  "provenance_modified_timestamp": 1570131434425,
-                                  "uuid": "398400024fda58e293cdb435db3c777e"
-                                },
-                            """
- 
- 
- 
+                            
+                        # clean up nodes
+                        # remove nodes that lack metadata
                         
+                        # need to devise a methodology for this    
+                            
                         # now, connect the nodes
                         for rel_record in record['relationships']:
                             from_uuid = rel_record['fromNode']['uuid']
@@ -244,15 +250,95 @@ class Provenance:
                             if rel_record['rel_data']['type'] == HubmapConst.HAS_METADATA_REL:
                                 # assign the metadata node as the metadata attribute
                                 # just extract the provenance information from the metadata node
-                                from_node['provenance_data'] = {HubmapConst.PROVENANCE_CREATE_TIMESTAMP_ATTRIBUTE : to_node[HubmapConst.PROVENANCE_CREATE_TIMESTAMP_ATTRIBUTE],
-                                                         HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE : to_node[HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE],
-                                                         HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE : to_node[HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE],
-                                                         HubmapConst.PROVENANCE_MODIFIED_TIMESTAMP_ATTRIBUTE : to_node[HubmapConst.PROVENANCE_MODIFIED_TIMESTAMP_ATTRIBUTE],
-                                                         HubmapConst.PROVENANCE_SUB_ATTRIBUTE : to_node[HubmapConst.PROVENANCE_SUB_ATTRIBUTE],
-                                                         HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE : to_node[HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE]}
-                                #d1.entity('govftp:oesm11st.zip', {'prov:label': 'employment-stats-2011', 'prov:type': 'void:Dataset'})
-                                prov_doc.entity('ex:' + str(from_node['uuid']), other_attributes)
+                                
+                                entity_timestamp_json = Provenance.get_json_timestamp(int(to_node[HubmapConst.PROVENANCE_CREATE_TIMESTAMP_ATTRIBUTE]))
+                                provenance_data = {ProvConst.PROV_GENERATED_TIME_ATTRIBUTE : entity_timestamp_json}
+                                type_code = None
+                                isEntity = True
+                                if HubmapConst.ENTITY_TYPE_ATTRIBUTE in from_node:
+                                    type_code = from_node[HubmapConst.ENTITY_TYPE_ATTRIBUTE]
+                                elif HubmapConst.ACTIVITY_TYPE_ATTRIBUTE in from_node:
+                                    type_code = from_node[HubmapConst.ACTIVITY_TYPE_ATTRIBUTE]
+                                    isEntity = False
+                                label_text = None                                
+                                if HubmapConst.LAB_IDENTIFIER_ATTRIBUTE in from_node:
+                                    label_text = from_node[HubmapConst.LAB_IDENTIFIER_ATTRIBUTE]
+                                else:
+                                    label_text = from_node[HubmapConst.UUID_ATTRIBUTE]
+                                    
+                                # build metadata attribute from the Metadata node
+                                metadata_attribute = {}
+                                for attribute_key in to_node:
+                                    if attribute_key not in self.metadata_ignore_attributes:
+                                        if attribute_key in self.known_attribute_map:                                            
+                                            # special case: timestamps
+                                            if attribute_key == HubmapConst.PROVENANCE_MODIFIED_TIMESTAMP_ATTRIBUTE:
+                                                provenance_data[self.known_attribute_map[attribute_key]] = Provenance.get_json_timestamp(int(to_node[attribute_key]))
+                                        else: #add any extraneous data to the metadata attribute
+                                            metadata_attribute[attribute_key] = to_node[attribute_key]
+                                       
+                                # Need to add the agent and organization here, plus the appropriate relationships (between the entity and the agent plus orgainzation)
+                                agent_record = self.get_agent_record(to_node)
+                                agent_uri = Provenance.build_uri('hubmap','agent',agent_record[ProvConst.HUBMAP_PROV_USER_UUID])
+                                organization_record = self.get_organization_record(to_node)
+                                organization_uri = Provenance.build_uri('hubmap','organization',organization_record[ProvConst.HUBMAP_PROV_GROUP_UUID])
+                                doc_agent = None
+                                doc_org = None
+                                
+                                get_agent = prov_doc.get_record(agent_uri)
+                                # only add this once
+                                if len(get_agent) == 0:
+                                    doc_agent = prov_doc.agent(agent_uri, agent_record)
+                                else:
+                                    doc_agent = get_agent[0]
+
+                                get_org = prov_doc.get_record(organization_uri)
+                                # only add this once
+                                if len(get_org) == 0:
+                                    doc_org = prov_doc.agent(organization_uri, organization_record)
+                                else:
+                                    doc_org = get_org[0]
+                                
+                                
+                                                                
+                                other_attributes = {ProvConst.PROV_LABEL_ATTRIBUTE : label_text,
+                                                    ProvConst.PROV_TYPE_ATTRIBUTE : type_code, 
+                                                    ProvConst.HUBMAP_DOI_ATTRIBUTE : from_node[HubmapConst.DOI_ATTRIBUTE],
+                                                    ProvConst.HUBMAP_DISPLAY_DOI_ATTRIBUTE : from_node[HubmapConst.DISPLAY_DOI_ATTRIBUTE],
+                                                    ProvConst.HUBMAP_DISPLAY_IDENTIFIER_ATTRIBUTE : label_text, 
+                                                    ProvConst.HUBMAP_UUID_ATTRIBUTE : from_node[HubmapConst.UUID_ATTRIBUTE]                                                    
+                                                    }
+                                # only add metadata if it contains data
+                                if len(metadata_attribute) > 0:
+                                    other_attributes[ProvConst.HUBMAP_METADATA_ATTRIBUTE] = json.dumps(metadata_attribute)
+                                # add the provenance data to the other_attributes
+                                other_attributes.update(provenance_data)
+                                if isEntity == True:
+                                    prov_doc.entity(Provenance.build_uri('hubmap','entities',from_node['uuid']), other_attributes)
+                                else:
+                                    activity_timestamp_json = Provenance.get_json_timestamp(int(to_node[HubmapConst.PROVENANCE_CREATE_TIMESTAMP_ATTRIBUTE]))
+                                    doc_activity = prov_doc.activity(Provenance.build_uri('hubmap','activities',from_node['uuid']), activity_timestamp_json, activity_timestamp_json, other_attributes)
+                                    prov_doc.actedOnBehalfOf(doc_agent, doc_org, doc_activity)
                             elif rel_record['rel_data']['type'] in [HubmapConst.ACTIVITY_OUTPUT_REL, HubmapConst.ACTIVITY_INPUT_REL]:
+                                to_node_uri = None
+                                from_node_uri = None
+                                if HubmapConst.ENTITY_TYPE_ATTRIBUTE in to_node:
+                                    to_node_uri = Provenance.build_uri('hubmap', 'entities', to_node['uuid'])
+                                else:
+                                    to_node_uri = Provenance.build_uri('hubmap', 'activities', to_node['uuid'])
+                                if HubmapConst.ENTITY_TYPE_ATTRIBUTE in from_node:
+                                    from_node_uri = Provenance.build_uri('hubmap', 'entities', from_node['uuid'])
+                                else:
+                                    from_node_uri = Provenance.build_uri('hubmap', 'activities', from_node['uuid'])
+                                
+                                if rel_record['rel_data']['type'] == 'ACTIVITY_OUTPUT':
+                                    #prov_doc.wasGeneratedBy(entity, activity, time, identifier, other_attributes)
+                                    prov_doc.wasGeneratedBy(to_node_uri, from_node_uri)
+
+                                if rel_record['rel_data']['type'] == 'ACTIVITY_INPUT':
+                                    #prov_doc.used(activity, entity, time, identifier, other_attributes)
+                                    prov_doc.used(to_node_uri, from_node_uri)
+                                
                                 # for now, simply create a "relation" where the fromNode's uuid is connected to a toNode's uuid via a relationship:
                                 # ex: {'fromNodeUUID': '42e10053358328c9079f1c8181287b6d', 'relationship': 'ACTIVITY_OUTPUT', 'toNodeUUID': '398400024fda58e293cdb435db3c777e'}
                                 rel_data_record = {'fromNodeUUID' : from_node['uuid'], 'relationship' : rel_record['rel_data']['type'], 'toNodeUUID' : to_node['uuid']}
@@ -261,8 +347,16 @@ class Provenance:
                     except Exception as e:
                         print("ERROR!: " + str(e))
       
+                
+
+                #print(prov_doc.get_provn())
+                #s = ProvJSONSerializer(prov_doc)
+                #s.serialize(sys.stdout)
+                #sys.stdout.flush()
+
+
                 #pprint(return_data)        
-                return return_data
+                return prov_doc
             except ConnectionError as ce:
                 print('A connection error occurred: ', str(ce.args[0]))
                 raise ce
@@ -275,24 +369,76 @@ class Provenance:
             except:
                 print('A general error occurred: ')
                 traceback.print_exc()
-    
 
-if __name__ == "__main__":    
-    """confdata = Provenance.load_config_file()
+    @staticmethod
+    def build_uri(prefix, uri_type, identifier):
+        return prefix + ':' + str(uri_type) + '/' + str(identifier)
+    
+    @staticmethod
+    def get_json_timestamp(int_timestamp):
+        #eastern = timezone('US/Eastern')
+        date = datetime.datetime.fromtimestamp(int_timestamp / 1e3)
+        jsondate = date.strftime("%Y-%m-%dT%H:%M:%S")
+        return jsondate
+        #2012-04-03T13:35:23
+        #print(jsondate)
+        #print(date)
+        #localized_timestamp = eastern.localize(date)
+     
+    def get_agent_record(self, node_data):
+        return_dict = {}
+        for attribute_key in node_data:
+            if attribute_key in self.agent_attribute_map:
+                return_dict[self.agent_attribute_map[attribute_key]] = node_data[attribute_key]
+        return_dict[PROV_TYPE] = 'prov:Person'
+        return return_dict
+    
+    def get_organization_record(self, node_data):
+        return_dict = {}
+        for attribute_key in node_data:
+            if attribute_key in self.organization_attribute_map:
+                return_dict[self.organization_attribute_map[attribute_key]] = node_data[attribute_key]
+        return_dict[PROV_TYPE] = 'prov:Organization'
+        return return_dict
+        
+if __name__ == "__main__":
+    
+       
+    confdata = Provenance.load_config_file()
     conn = Neo4jConnection(confdata['neo4juri'], confdata['neo4jusername'], confdata['neo4jpassword'])
     driver = conn.get_driver()
     prov = Provenance(confdata['appclientid'], confdata['appclientsecret'], confdata['UUID_WEBSERVICE_URL'])
     uuid = '398400024fda58e293cdb435db3c777e'
-    uuid = 'd6be7b5ec50dacd4e8faf45c78e4b7c9'
-    history_data = prov.get_provenance_history(driver, uuid, 4)
-    pprint(history_data)"""
+    # this is a Vanderbilt uuid:  uuid = '4614ea24338ec820569f988196a5c503'
+    uuid = '0817f6a3a2f170486a49f2ffae46072d'
     
-    your_timestamp = 1571248740444
+    #print('max depth')
+    #history_data = prov.get_provenance_history(driver, uuid, None)
+    
+    #g.serialize(format='rdf', rdf_format='trig')
+    
+    #print(history_data.serialize(indent=2))
+    #print(history_data.serialize(format='rdf', rdf_format='trig'))
+    #print(history_data.serialize(format='provn'))
+
+    
+    print('depth=2')
+    history_data = prov.get_provenance_history(driver, uuid, 2)
+    print(history_data.serialize(indent=2))
+    
+    """
+    print('depth=4')
+    history_data = prov.get_provenance_history(driver, uuid, 4)
+    print(history_data.serialize(indent=2))
+    """
+    
+    """
+    your_timestamp = 1571248733444
     eastern = timezone('US/Eastern')
     date = datetime.datetime.fromtimestamp(your_timestamp / 1e3)
-    localized_timestamp = eastern.localize(date)
-    #utc_dt.replace(tzinfo=timezone.utc).astimezone(tz=None)
-    #date.replace(tzinfo=timezone.utc).astimezone(tz=None)
-    #pprint(localized_timestamp)
-    
-    
+    jsondate= date.strftime("%Y-%m-%dT%H:%M:%S")
+    #2012-04-03T13:35:23
+    print(jsondate)
+    print(date)
+    #localized_timestamp = eastern.localize(date)
+    """
