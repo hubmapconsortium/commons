@@ -12,7 +12,7 @@ import traceback
 from pprint import pprint
 import json
 import prov
-from prov.model import ProvDocument, PROV_TYPE
+from prov.model import ProvDocument, PROV_TYPE, Namespace
 from prov.serializers.provjson import ProvJSONSerializer
 import datetime
 from pytz import timezone
@@ -25,7 +25,6 @@ from hubmap_commons.uuid_generator import UUID_Generator
 from hubmap_commons.entity import Entity
 from hubmap_commons.hm_auth import AuthHelper, AuthCache
 from builtins import staticmethod
-from test.test_funcattrs import StaticMethodAttrsTest
 
 
 
@@ -195,8 +194,8 @@ class Provenance:
         prov_doc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
         prov_doc.add_namespace('ex', 'http://example.org/')
         prov_doc.add_namespace('hubmap', 'https://hubmapconsortium.org/')
-        prov_doc.add_namespace('dct', 'http://purl.org/dc/terms/')
-        prov_doc.add_namespace('foaf','http://xmlns.com/foaf/0.1/')
+        #prov_doc.add_namespace('dct', 'http://purl.org/dc/terms/')
+        #prov_doc.add_namespace('foaf','http://xmlns.com/foaf/0.1/')
         relation_list = []
         with driver.session() as session:
             try:
@@ -236,7 +235,7 @@ class Provenance:
                         for node_record in record['nodes']:
                             node_dict[node_record['uuid']] = node_record
                             
-                        # clean up nodes
+                        # TODO: clean up nodes
                         # remove nodes that lack metadata
                         
                         # need to devise a methodology for this    
@@ -376,14 +375,9 @@ class Provenance:
     
     @staticmethod
     def get_json_timestamp(int_timestamp):
-        #eastern = timezone('US/Eastern')
         date = datetime.datetime.fromtimestamp(int_timestamp / 1e3)
         jsondate = date.strftime("%Y-%m-%dT%H:%M:%S")
         return jsondate
-        #2012-04-03T13:35:23
-        #print(jsondate)
-        #print(date)
-        #localized_timestamp = eastern.localize(date)
      
     def get_agent_record(self, node_data):
         return_dict = {}
@@ -425,6 +419,8 @@ if __name__ == "__main__":
     print('depth=2')
     history_data = prov.get_provenance_history(driver, uuid, 2)
     print(history_data.serialize(indent=2))
+    #print(history_data.serialize(format='rdf', rdf_format='trig'))
+    #print(history_data.serialize(format='provn'))
     
     """
     print('depth=4')
