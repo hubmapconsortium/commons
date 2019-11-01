@@ -25,7 +25,6 @@ from hubmap_commons.uuid_generator import UUID_Generator
 from hubmap_commons.entity import Entity
 from hubmap_commons.hm_auth import AuthHelper, AuthCache
 from builtins import staticmethod
-from constants import PROV, PROV_GENERATION
 
 
 
