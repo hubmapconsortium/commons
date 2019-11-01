@@ -14,7 +14,6 @@ import json
 import prov
 from prov.model import ProvDocument, PROV_TYPE, Namespace, NamespaceManager
 from prov.serializers.provjson import ProvJSONSerializer
-from prov.constants import PROV
 import datetime
 from pytz import timezone
 import pytz
@@ -26,7 +25,7 @@ from hubmap_commons.uuid_generator import UUID_Generator
 from hubmap_commons.entity import Entity
 from hubmap_commons.hm_auth import AuthHelper, AuthCache
 from builtins import staticmethod
-from constants import PROV
+from constants import PROV, PROV_GENERATION
 
 
 
@@ -193,6 +192,7 @@ class Provenance:
     
     def get_provenance_history(self, driver, uuid, depth=None):
         prov_doc = ProvDocument()
+        #prov_doc.
         #NOTE!! There is a bug with the JSON serializer.  I can't add the prov prefix
         prov_doc.add_namespace('ex', 'http://example.org/')
         prov_doc.add_namespace('hubmap', 'https://hubmapconsortium.org/')
@@ -240,7 +240,14 @@ class Provenance:
                         # TODO: clean up nodes
                         # remove nodes that lack metadata
                         
-                        # need to devise a methodology for this    
+                        # need to devise a methodology for this
+                        # try preprocessing the record['relationships'] here:
+                        # make a copy of the node_dict called unreferenced_node_dict
+                        # loop through the relationships and find all the has_metadata relationships
+                        # for each node pair in the has_metadata relationship, delete it from the unreferenced_node_dict
+                        # once the loop is finished, continue as before
+                        # add some logic when generating the wasGenerated and used relationships.  If either node is in the 
+                        # unreferenced_node_dict, then ignore the relationship
                             
                         # now, connect the nodes
                         for rel_record in record['relationships']:
@@ -348,10 +355,17 @@ class Provenance:
                     except Exception as e:
                         print("ERROR!: " + str(e))
       
+      
+                 
                 # there is a bug in the JSON serializer.  So manually insert the prov prefix
+                
                 output_doc = prov_doc.serialize(indent=2) 
                 output_doc = output_doc.replace('"prefix": {', '"prefix": {\n    "prov" : "http://www.w3.org/ns/prov#", ')
+                
+                #output_doc = prov_doc.serialize(format='rdf', rdf_format='trig')
+                #output_doc = prov_doc.serialize(format='provn')
                 return output_doc
+            
             except ConnectionError as ce:
                 print('A connection error occurred: ', str(ce.args[0]))
                 raise ce
