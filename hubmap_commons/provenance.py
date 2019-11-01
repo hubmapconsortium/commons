@@ -12,8 +12,9 @@ import traceback
 from pprint import pprint
 import json
 import prov
-from prov.model import ProvDocument, PROV_TYPE, Namespace
+from prov.model import ProvDocument, PROV_TYPE, Namespace, NamespaceManager
 from prov.serializers.provjson import ProvJSONSerializer
+from prov.constants import PROV
 import datetime
 from pytz import timezone
 import pytz
@@ -25,6 +26,7 @@ from hubmap_commons.uuid_generator import UUID_Generator
 from hubmap_commons.entity import Entity
 from hubmap_commons.hm_auth import AuthHelper, AuthCache
 from builtins import staticmethod
+from constants import PROV
 
 
 
@@ -191,7 +193,7 @@ class Provenance:
     
     def get_provenance_history(self, driver, uuid, depth=None):
         prov_doc = ProvDocument()
-        prov_doc.add_namespace('prov', 'http://www.w3.org/ns/prov#')
+        #NOTE!! There is a bug with the JSON serializer.  I can't add the prov prefix
         prov_doc.add_namespace('ex', 'http://example.org/')
         prov_doc.add_namespace('hubmap', 'https://hubmapconsortium.org/')
         #prov_doc.add_namespace('dct', 'http://purl.org/dc/terms/')
@@ -346,16 +348,10 @@ class Provenance:
                     except Exception as e:
                         print("ERROR!: " + str(e))
       
-                
-
-                #print(prov_doc.get_provn())
-                #s = ProvJSONSerializer(prov_doc)
-                #s.serialize(sys.stdout)
-                #sys.stdout.flush()
-
-
-                #pprint(return_data)        
-                return prov_doc
+                # there is a bug in the JSON serializer.  So manually insert the prov prefix
+                output_doc = prov_doc.serialize(indent=2) 
+                output_doc = output_doc.replace('"prefix": {', '"prefix": {\n    "prov" : "http://www.w3.org/ns/prov#", ')
+                return output_doc
             except ConnectionError as ce:
                 print('A connection error occurred: ', str(ce.args[0]))
                 raise ce
@@ -418,7 +414,7 @@ if __name__ == "__main__":
     
     print('depth=2')
     history_data = prov.get_provenance_history(driver, uuid, 2)
-    print(history_data.serialize(indent=2))
+    print(history_data)
     #print(history_data.serialize(format='rdf', rdf_format='trig'))
     #print(history_data.serialize(format='provn'))
     
