@@ -1,0 +1,5 @@
+SECRET_KEY = 'secrettousewithflasksession'
+
+
+APP_CLIENT_ID = 'Globus-client-id'
+APP_CLIENT_SECRET = 'client-secret'
