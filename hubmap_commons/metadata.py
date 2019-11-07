@@ -17,7 +17,7 @@ from hubmap_commons.uuid_generator import UUID_Generator
 from hubmap_commons.hm_auth import AuthHelper, AuthCache
 from hubmap_commons.entity import Entity
 
-class Metadata:
+class Metadata(object):
 
     md_config = {}
     
