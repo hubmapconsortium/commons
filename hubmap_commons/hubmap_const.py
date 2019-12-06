@@ -44,6 +44,7 @@ class HubmapConst(object):
                               DATASET_STATUS_UNPUBLISHED,DATASET_STATUS_QA,DATASET_STATUS_DEPRECATED,
                               DATASET_STATUS_PROCESSING, DATASET_STATUS_ERROR]
     DATASET_INGEST_ID_ATTRIBUTE = 'ingest_id'
+    DATASET_INGEST_METADATA_ATTRIBUTE = 'ingest_metadata'
     DATASET_RUN_ID = 'run_id'
     DATASET_MESSAGE_ATTRIBUTE = 'message'
     FILE_PATH_ATTRIBUTE = 'filepath'
