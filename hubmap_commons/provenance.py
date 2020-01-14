@@ -250,7 +250,7 @@ class Provenance:
                 """
                 
                 stmt = """MATCH (n:Entity {{ uuid: '{uuid}' }}) 
-                CALL apoc.path.subgraphAll(n, {{ {max_level_str} relationshipFilter:'<ACTIVITY_INPUT|<ACTIVITY_OUTPUT|HAS_METADATA' }}) YIELD nodes, relationships
+                CALL apoc.path.subgraphAll(n, {{ {max_level_str} relationshipFilter:'<ACTIVITY_INPUT|<ACTIVITY_OUTPUT|HAS_METADATA>' }}) YIELD nodes, relationships
                 WITH [node in nodes | node {{ .*, label:labels(node)[0] }} ] as nodes, 
                      [rel in relationships | rel {{ .*, fromNode: {{ label:labels(startNode(rel))[0], uuid:startNode(rel).uuid }} , toNode: {{ label:labels(endNode(rel))[0], uuid:endNode(rel).uuid }}, rel_data: {{ type: type(rel) }} }} ] as rels
                 WITH {{ nodes:nodes, relationships:rels }} as json
@@ -324,8 +324,6 @@ class Provenance:
                                 # Need to add the agent and organization here, plus the appropriate relationships (between the entity and the agent plus orgainzation)
                                 agent_record = self.get_agent_record(to_node)
                                 agent_uri = Provenance.build_uri('hubmap','agent',agent_record[ProvConst.HUBMAP_PROV_USER_UUID])
-                                if (to_node['provenance_group_name'] == '5bd084c8-edc2-11e8-802f-0e368f3075e8'):
-                                    print("here")
                                 organization_record = self.get_organization_record(to_node)
                                 organization_uri = Provenance.build_uri('hubmap','organization',organization_record[ProvConst.HUBMAP_PROV_GROUP_UUID])
                                 doc_agent = None
@@ -470,7 +468,7 @@ if __name__ == "__main__":
     prov = Provenance(confdata['appclientid'], confdata['appclientsecret'], confdata['UUID_WEBSERVICE_URL'])
     uuid = '398400024fda58e293cdb435db3c777e'
     # this is a Vanderbilt uuid:  uuid = '4614ea24338ec820569f988196a5c503'
-    uuid = 'eda3916db4695d834eb6c51a893d06f1'
+    uuid = 'a9ad6b2f324df4ef25ae1acf7de73649'
     
     #print('max depth')
     #history_data = prov.get_provenance_history(driver, uuid, None)
