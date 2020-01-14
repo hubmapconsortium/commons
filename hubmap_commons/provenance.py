@@ -4,6 +4,7 @@ Created on Sep 1, 2019
 @author: chb69
 '''
 from neo4j import TransactionError, CypherError
+from hubmap_commons import string_helper, file_helper
 import os
 import sys
 import configparser
@@ -52,6 +53,7 @@ class ProvConst(object):
     HUBMAP_PROV_USER_DISPLAY_NAME = 'hubmap:userDisplayName'
     HUBMAP_PROV_USER_EMAIL = 'hubmap:userEmail'
     HUBMAP_PROV_USER_UUID = 'hubmap:userUUID'
+    groupJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-globus-groups.json'
      
 
 class Provenance:
@@ -68,13 +70,29 @@ class Provenance:
     agent_attribute_map = {HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE: ProvConst.HUBMAP_PROV_USER_DISPLAY_NAME, HubmapConst.PROVENANCE_USER_EMAIL_ATTRIBUTE: ProvConst.HUBMAP_PROV_USER_EMAIL,
                            HubmapConst.PROVENANCE_SUB_ATTRIBUTE : ProvConst.HUBMAP_PROV_USER_UUID}
     
-    organization_attribute_map = {HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE : ProvConst.HUBMAP_PROV_GROUP_NAME, HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE : ProvConst.HUBMAP_PROV_GROUP_UUID}
+    organization_attribute_map = {'displayname' : ProvConst.HUBMAP_PROV_GROUP_NAME, 'uuid' : ProvConst.HUBMAP_PROV_GROUP_UUID}
+    
+    groupsById = {}
+    groupsByName = {}
     
     def __init__(self, app_client_id, app_client_secret, uuid_webservice_url):
         self.provenance_config['APP_CLIENT_ID'] = app_client_id
         self.provenance_config['APP_CLIENT_SECRET'] = app_client_secret
         self.provenance_config['UUID_WEBSERVICE_URL'] = uuid_webservice_url
-        
+        self.load_group_data()
+
+    def load_group_data(self):
+        with open(AuthCache.groupJsonFilename) as jsFile:
+            groups = json.load(jsFile)
+            for group in groups:
+                if 'name' in group and 'uuid' in group and 'generateuuid' in group and 'displayname' in group and not string_helper.isBlank(group['name']) and not string_helper.isBlank(group['uuid']) and not string_helper.isBlank(group['displayname']):
+                    group_obj = {'name' : group['name'].lower().strip(), 'uuid' : group['uuid'].lower().strip(),
+                                 'displayname' : group['displayname'], 'generateuuid': group['generateuuid']}
+                    if 'tmc_prefix' in group:
+                        group_obj['tmc_prefix'] = group['tmc_prefix']
+                    self.groupsByName[group['name'].lower().strip()] = group_obj
+                    self.groupsById[group['uuid']] = group_obj
+
         
     @staticmethod
     def load_config_file():
@@ -192,9 +210,11 @@ class Provenance:
     def get_provenance_history(self, driver, uuid, depth=None):
         prov_doc = ProvDocument()
         #prov_doc.
-        #NOTE!! There is a bug with the JSON serializer.  I can't add the prov prefix
+        #NOTE!! There is a bug with the JSON serializer.  I can't add the prov prefix using this mechanism
+        
         prov_doc.add_namespace('ex', 'http://example.org/')
         prov_doc.add_namespace('hubmap', 'https://hubmapconsortium.org/')
+        
         #prov_doc.add_namespace('dct', 'http://purl.org/dc/terms/')
         #prov_doc.add_namespace('foaf','http://xmlns.com/foaf/0.1/')
         relation_list = []
@@ -212,13 +232,30 @@ class Provenance:
                 becomes the 'metadata' attribute for the Entity node.
                 """
 
+
+                """Possible replacement:
+                THIS WORKS...NEEDS LOTS of COMMENTS!!
+                MATCH (entity_metadata)<-[r1:HAS_METADATA]-(e)<-[r2:ACTIVITY_OUTPUT]-(a:Activity)-[r3:HAS_METADATA]->(activity_metadata) 
+                                WHERE e.hubmap_identifier = 'TEST0010-LK-1-1'
+                                WITH [e,a, entity_metadata, activity_metadata] AS entities, COLLECT(r1) + COLLECT(r2) + COLLECT(r3) AS relationships
+                                WITH [node in entities | node {.*, label:labels(node)}] AS nodes, [rel in relationships | rel { .*, fromNode: { label:labels(startNode(rel))[0], uuid:startNode(rel).uuid } , toNode: { label:labels(endNode(rel))[0], uuid:endNode(rel).uuid }, rel_data: { type: type(rel) } } ] as rels
+                                RETURN nodes, rels
+                UNION OPTIONAL MATCH (activity_metadata)<-[r1:HAS_METADATA]-(a:Activity)<-[r2:ACTIVITY_INPUT|:ACTIVITY_OUTPUT*]-(parent)-[r3:HAS_METADATA]->(parent_metadata),
+                (e)<-[r4:ACTIVITY_OUTPUT]-(a:Activity) 
+                                WHERE e.hubmap_identifier = 'TEST0010-LK-1-1'
+                                WITH [parent,parent_metadata, a, activity_metadata] AS nodes, [rel in COLLECT(r1) + COLLECT(r3) + COLLECT(r4)+COLLECT(apoc.convert.toRelationship(r2)) | rel { .*, fromNode: { label:labels(startNode(rel))[0], uuid:startNode(rel).uuid } , toNode: { label:labels(endNode(rel))[0], uuid:endNode(rel).uuid }, rel_data: { type: type(rel) } } ] as rels
+                                RETURN DISTINCT nodes, rels                
+
+                uuid for TEST0010-LK-1-1 for testing: eda3916db4695d834eb6c51a893d06f1
+                """
+                
                 stmt = """MATCH (n:Entity {{ uuid: '{uuid}' }}) 
                 CALL apoc.path.subgraphAll(n, {{ {max_level_str} relationshipFilter:'<ACTIVITY_INPUT|<ACTIVITY_OUTPUT|HAS_METADATA' }}) YIELD nodes, relationships
                 WITH [node in nodes | node {{ .*, label:labels(node)[0] }} ] as nodes, 
                      [rel in relationships | rel {{ .*, fromNode: {{ label:labels(startNode(rel))[0], uuid:startNode(rel).uuid }} , toNode: {{ label:labels(endNode(rel))[0], uuid:endNode(rel).uuid }}, rel_data: {{ type: type(rel) }} }} ] as rels
                 WITH {{ nodes:nodes, relationships:rels }} as json
                 RETURN json""".format(uuid=uuid, max_level_str=max_level_str)
-                
+                    
                 result = session.run(stmt)
                 
                 #there should only be one record
@@ -287,6 +324,8 @@ class Provenance:
                                 # Need to add the agent and organization here, plus the appropriate relationships (between the entity and the agent plus orgainzation)
                                 agent_record = self.get_agent_record(to_node)
                                 agent_uri = Provenance.build_uri('hubmap','agent',agent_record[ProvConst.HUBMAP_PROV_USER_UUID])
+                                if (to_node['provenance_group_name'] == '5bd084c8-edc2-11e8-802f-0e368f3075e8'):
+                                    print("here")
                                 organization_record = self.get_organization_record(to_node)
                                 organization_uri = Provenance.build_uri('hubmap','organization',organization_record[ProvConst.HUBMAP_PROV_GROUP_UUID])
                                 doc_agent = None
@@ -352,7 +391,7 @@ class Provenance:
                                 relation_list.append(rel_data_record)
                         return_data = {'nodes' : node_dict, 'relations' : relation_list}  
                     except Exception as e:
-                        print("ERROR!: " + str(e))
+                        raise e
       
       
                  
@@ -397,10 +436,28 @@ class Provenance:
         return return_dict
     
     def get_organization_record(self, node_data):
+    # lookup the node's provenance group using the group JSON file as a source
+    # previously it relied on data found in the nodes, but that might be incomplete
         return_dict = {}
-        for attribute_key in node_data:
+        group_record = {}
+        if HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE in node_data:
+            group_uuid = node_data[HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE]
+            if group_uuid in self.groupsById:
+                group_record = self.groupsById[group_uuid]
+            else:
+                raise LookupError('Cannot find group for uuid: ' + group_uuid)
+        elif HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE in node_data:
+            group_name = node_data[HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE]
+            if group_name in self.groupsByName:
+                group_record = self.groupsByName[group_name]
+            #handle the case where the group UUID is incorrectly stored in the name field:
+            elif group_name in self.groupsById:
+                group_record = self.groupsById[group_name]
+            else:
+                raise LookupError('Cannot find group for name: ' + group_name)
+        for attribute_key in group_record:
             if attribute_key in self.organization_attribute_map:
-                return_dict[self.organization_attribute_map[attribute_key]] = node_data[attribute_key]
+                return_dict[self.organization_attribute_map[attribute_key]] = group_record[attribute_key]
         return_dict[PROV_TYPE] = 'prov:Organization'
         return return_dict
         
@@ -413,7 +470,7 @@ if __name__ == "__main__":
     prov = Provenance(confdata['appclientid'], confdata['appclientsecret'], confdata['UUID_WEBSERVICE_URL'])
     uuid = '398400024fda58e293cdb435db3c777e'
     # this is a Vanderbilt uuid:  uuid = '4614ea24338ec820569f988196a5c503'
-    uuid = '0817f6a3a2f170486a49f2ffae46072d'
+    uuid = 'eda3916db4695d834eb6c51a893d06f1'
     
     #print('max depth')
     #history_data = prov.get_provenance_history(driver, uuid, None)
@@ -425,8 +482,8 @@ if __name__ == "__main__":
     #print(history_data.serialize(format='provn'))
 
     
-    print('depth=2')
-    history_data = prov.get_provenance_history(driver, uuid, 2)
+    #print('depth=4')
+    history_data = prov.get_provenance_history(driver, uuid)
     print(history_data)
     #print(history_data.serialize(format='rdf', rdf_format='trig'))
     #print(history_data.serialize(format='provn'))
