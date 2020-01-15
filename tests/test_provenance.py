@@ -25,10 +25,6 @@ class TestProvenance(unittest.TestCase):
 
 
     def test_get_provenance_history(self):
-        #Note: We should make this more generic and test more items
-        # we should specifically test a donor id and a sample
-        # if we extract a list of all the samples/donors, we can randomly select
-        # a set of them to test (maybe 5 or 6)
         # in general, the display id (ex: TEST0010-LK-1-1-1) will dictate the corresponding
         # number of entity entries returned.  Basically, the entity entry count should equal the number of hyphens 
         # in the display id plus one.  For example, TEST0010 will have 1 entity entry.  TEST0010-LK will have two: one for the donor TEST0010
