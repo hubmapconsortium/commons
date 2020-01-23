@@ -55,6 +55,7 @@ class HubmapConst(object):
     ACTIVITY_TYPE_ATTRIBUTE = 'activitytype'
     AGENT_TYPE_ATTRIBUTE = 'agenttype'
     METADATA_TYPE_ATTRIBUTE = 'metadatatype'
+    DATA_TYPES_ATTRIBUTE = 'data_types'
     PROVENANCE_CREATE_TIMESTAMP_ATTRIBUTE = 'provenance_create_timestamp'
     PROVENANCE_MODIFIED_TIMESTAMP_ATTRIBUTE = 'provenance_modified_timestamp'
     PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE = 'provenance_user_displayname'
