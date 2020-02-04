@@ -319,6 +319,15 @@ class Entity(object):
             
             
             group_list = AuthCache.getHMGroups()
+            
+            # if the users is a member of the READONLY group and you want a list
+            # of read only groups, then just return all the groups
+            readonly_group_uuid = '5777527e-ec11-11e8-ab41-0af86edb4424'            
+            if group_type == 'READONLY' and readonly_group_uuid in userinfo['hmgroupids']:
+                for group_name in group_list.keys():
+                    return_list.append(group_list[group_name])
+                return return_list
+                    
             for group_uuid in userinfo['hmgroupids']:
                 for group_name in group_list.keys():
                     if group_list[group_name]['uuid'] == group_uuid:
