@@ -233,10 +233,6 @@ def load_config_file():
         entity_config['APP_CLIENT_ID'] = config.get('GLOBUS', 'APP_CLIENT_ID')
         entity_config['APP_CLIENT_SECRET'] = config.get(
             'GLOBUS', 'APP_CLIENT_SECRET')
-        entity_config['STAGING_ENDPOINT_UUID'] = config.get(
-            'GLOBUS', 'STAGING_ENDPOINT_UUID')
-        entity_config['PUBLISH_ENDPOINT_UUID'] = config.get(
-            'GLOBUS', 'PUBLISH_ENDPOINT_UUID')
         entity_config['SECRET_KEY'] = config.get('GLOBUS', 'SECRET_KEY')
         entity_config['UUID_UI_URL'] = config.get('HUBMAP', 'UUID_UI_URL')
         return entity_config
