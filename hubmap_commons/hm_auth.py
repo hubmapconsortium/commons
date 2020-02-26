@@ -8,8 +8,8 @@ import functools
 import threading
 import json
 import os
+import re
 from hubmap_commons import file_helper
-import pprint
 
 TOKEN_EXPIRATION = 900 #15 minutes
 GLOBUS_GROUP_SCOPE = 'urn:globus:auth:scope:nexus.api.globus.org:groups'
@@ -74,7 +74,7 @@ def secured(func=None, groups=None, scopes=None):
 class AuthHelper:
     applicationClientId = None
     applicationClientSecret = None
-    
+
     @staticmethod
     def create(clientId, clientSecret):
         if helperInstance is not None:
@@ -105,10 +105,13 @@ class AuthHelper:
         
         self.applicationClientId = clientId
         self.applicationClientSecret = clientSecret
-        
+        AuthCache.setProcessSecret(re.sub(r'[^a-zA-Z0-9]', '', clientSecret))
         if helperInstance is None:
             helperInstance = self
         
+    def getProcessSecret(self):
+        return AuthCache.procSecret
+
     def getAuthorizationTokens(self, requestHeaders):
         hasMauth=False
         hasAuth=False
@@ -243,7 +246,15 @@ class AuthCache:
     groupLastRefreshed = None
     groupJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-globus-groups.json'
     roleJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-globus-roles.json'
-    
+    procSecret = None
+    processUserFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-process-user.json'
+    processUser = None
+         
+    @staticmethod
+    def setProcessSecret(secret):
+        if AuthCache.procSecret is None:
+            AuthCache.procSecret = secret
+
     @staticmethod
     def getHMGroups():
         with AuthCache.groupLock:
@@ -331,6 +342,8 @@ class AuthCache:
 
     @staticmethod
     def __userGroups(token):
+        if token == AuthCache.procSecret:
+            return ["5777527e-ec11-11e8-ab41-0af86edb4424"]
         getHeaders = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -352,6 +365,12 @@ class AuthCache:
 
     @staticmethod
     def __userInfo(applicationKey, authToken, getGroups=False):
+        if authToken == AuthCache.procSecret:
+            if AuthCache.processUser is None:
+                with open(AuthCache.processUserFilename) as jsFile:
+                    AuthCache.processUser = json.load(jsFile)
+            return AuthCache.processUser
+
         postHeaders = {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Authorization': 'Basic ' + applicationKey

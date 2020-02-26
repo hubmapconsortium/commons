@@ -6,6 +6,7 @@ Created on Apr 18, 2019
 from builtins import staticmethod
 
 class HubmapConst(object):
+    
     ENTITY_NODE_NAME = 'Entity'
     ACTIVITY_NODE_NAME = 'Activity'
     AGENT_NODE_NAME = 'Agent'

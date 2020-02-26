@@ -1,0 +1,16 @@
+{
+    "username": "hubmap@hubmapconsortium.org",
+    "token_type": "Bearer",
+    "client_id": "21f293b0-5fa5-4ee1-9e0e-3cf88bd70114",
+    "scope": "process",
+    "active":true,
+    "nbf": 9999999999,
+    "name": "HuBMAP Process",
+    "aud": ["proc.role", "3e7bce63-129d-33d0-8f6c-834b34cd382e"],
+    "sub": "3e7bce63-129d-33d0-8f6c-834b34cd382e",
+    "iss": "https://auth.hubmapconsortium.org",
+    "exp": 9999999999,
+    "iat": 9999999999,
+    "email": "hubmap@hubmapconsortium.org",
+    "hmgroupids": ["5777527e-ec11-11e8-ab41-0af86edb4424"]
+}
