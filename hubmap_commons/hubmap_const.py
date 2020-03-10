@@ -51,7 +51,7 @@ class HubmapConst(object):
     DATASET_RUN_ID = 'run_id'
     DATASET_MESSAGE_ATTRIBUTE = 'message'
     FILE_PATH_ATTRIBUTE = 'filepath'
-    HAS_PHI_ATTRIBUTE = 'hasphi'
+    HAS_PHI_ATTRIBUTE = 'phi'
     UUID_ATTRIBUTE = 'uuid'
     ENTITY_TYPE_ATTRIBUTE = 'entitytype'
     ACTIVITY_TYPE_ATTRIBUTE = 'activitytype'
