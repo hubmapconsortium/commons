@@ -32,9 +32,12 @@ def secured(func=None, groups=None, scopes=None):
             if isinstance(userInfo, Response):
                 return userInfo
             
+            sys_acct = False
+            if "is_system_account" in userInfo: sys_acct = userInfo['is_system_account'] 
+            
             #check that auth is in required scope
             tScopes = []
-            if hasGroups: tScopes.append(GLOBUS_GROUP_SCOPE)
+            if hasGroups and sys_acct is False: tScopes.append(GLOBUS_GROUP_SCOPE)
             if scopes is not None:
                 if isinstance(scopes, list): tScopes.extend(scopes)
                 else: tScopes.append(scopes)

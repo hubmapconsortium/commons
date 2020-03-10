@@ -4,6 +4,7 @@
     "client_id": "21f293b0-5fa5-4ee1-9e0e-3cf88bd70114",
     "scope": "process",
     "active":true,
+    "is_system_account": true,        
     "nbf": 9999999999,
     "name": "HuBMAP Process",
     "aud": ["proc.role", "3e7bce63-129d-33d0-8f6c-834b34cd382e"],
