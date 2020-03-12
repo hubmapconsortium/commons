@@ -90,6 +90,7 @@ class HubmapConst(object):
     DATASET_LOCAL_DIRECTORY_PATH_ATTRIBUTE = 'local_directory_url_path'
     ORGAN_TYPE_ATTRIBUTE = 'organ'
     SOURCE_UUID_ATTRIBUTE = 'source_uuid'
+    RUI_LOCATION_ATTRIBUTE = 'rui_location'
     
     
     #Organ Specifiers
