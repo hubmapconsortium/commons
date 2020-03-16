@@ -6,6 +6,7 @@ Created on Apr 18, 2019
 from builtins import staticmethod
 
 class HubmapConst(object):
+    
     ENTITY_NODE_NAME = 'Entity'
     ACTIVITY_NODE_NAME = 'Activity'
     AGENT_NODE_NAME = 'Agent'
@@ -46,10 +47,11 @@ class HubmapConst(object):
                               DATASET_STATUS_PROCESSING, DATASET_STATUS_ERROR, DATASET_STATUS_HOLD]
     DATASET_INGEST_ID_ATTRIBUTE = 'ingest_id'
     DATASET_INGEST_METADATA_ATTRIBUTE = 'ingest_metadata'
+    DATASET_INGEST_FILE_LIST_ATTRIBUTE = 'ingest_file_list'
     DATASET_RUN_ID = 'run_id'
     DATASET_MESSAGE_ATTRIBUTE = 'message'
     FILE_PATH_ATTRIBUTE = 'filepath'
-    HAS_PHI_ATTRIBUTE = 'hasphi'
+    HAS_PHI_ATTRIBUTE = 'phi'
     UUID_ATTRIBUTE = 'uuid'
     ENTITY_TYPE_ATTRIBUTE = 'entitytype'
     ACTIVITY_TYPE_ATTRIBUTE = 'activitytype'
@@ -91,6 +93,7 @@ class HubmapConst(object):
     DATASET_LOCAL_DIRECTORY_PATH_ATTRIBUTE = 'local_directory_url_path'
     ORGAN_TYPE_ATTRIBUTE = 'organ'
     SOURCE_UUID_ATTRIBUTE = 'source_uuid'
+    RUI_LOCATION_ATTRIBUTE = 'rui_location'
     
     
     #Organ Specifiers

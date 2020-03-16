@@ -50,14 +50,14 @@ class GlobusFileHelper:
     
     def publish_directory(self, dir_UUID):
         try:
-            self.move_directory(dir_UUID, self.get_staging_path(dir_UUID), self.get_publish_path(dir_UUID))
+            self.move_directory(dir_UUID, self.get_dataset_file_path(dir_UUID), self.get_publish_path(dir_UUID))
             print ("Done publishing directory: " + self.get_publish_path(dir_UUID))
             return self.get_publish_path(dir_UUID)
         except:
             raise
     
     #TODO: This method needs the user's group id
-    def get_staging_path(self, uuid):
+    def get_dataset_file_path(self, uuid):
         return self.staging_file_path
     
     #TODO: This method needs the user's group id
