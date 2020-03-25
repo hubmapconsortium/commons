@@ -706,6 +706,69 @@ class Entity(object):
                     print (x)
                 raise
 
+    @staticmethod
+    def get_ancestors(driver, uuid):
+        '''
+        Get all ancestors by uuid
+        '''
+        with driver.session() as session:
+            ancestor_ids = []
+            ancestors = []
+            try:
+                stmt = f'''MATCH (e:Entity {{ {HubmapConst.UUID_ATTRIBUTE}: '{uuid}' }})<-[ACTIVITY_OUTPUT]-(e1)<-[r:ACTIVITY_INPUT|:ACTIVITY_OUTPUT*]-(a:Entity), 
+                (e)-[r1:HAS_METADATA]->(m), (a)-[r2:HAS_METADATA]->(am) 
+                RETURN e, m, a, am'''
+
+                for record in session.run(stmt, uuid=uuid):
+                    ancestor_ids.append(record.get('a')['uuid'])
+                    ancestor = {}
+                    ancestor.update(record.get('a')._properties)
+                    for key, value in record.get('am')._properties.items():
+                        ancestor.setdefault(key, value)
+                    ancestors.append(ancestor)
+
+                return ancestors               
+            except CypherError as cse:
+                print ('A Cypher error was encountered: '+ cse.message)
+                raise
+            except BaseException as be:
+                pprint(be)
+                raise be
+
+    @staticmethod
+    def get_descendants(driver, uuid):
+        '''
+        Get all descendants by uuid
+        '''
+        with driver.session() as session:
+            descendant_ids = []
+            descendants = []
+            try:
+                stmt = f'''MATCH (e:Entity {{ {HubmapConst.UUID_ATTRIBUTE}: '{uuid}' }})-[:ACTIVITY_INPUT]->(a:Activity)-[r:ACTIVITY_INPUT|:ACTIVITY_OUTPUT*]->(d:Entity),
+                         (e)-[r1:HAS_METADATA]->(m), (d)-[r2:HAS_METADATA]->(dm) 
+                        RETURN DISTINCT e, m, d, dm'''
+
+                for record in session.run(stmt, uuid=uuid):
+                    descendant_ids.append(record.get('d')['uuid'])
+                    descendant = {}
+                    descendant.update(record.get('d')._properties)
+                    for key, value in record.get('dm')._properties.items():
+                        if key == 'ingest_metadata':
+                            ingest_metadata = ast.literal_eval(value)
+                            for key, value in ingest_metadata.items():
+                                descendant.setdefault(key, value)
+                        else:
+                            descendant.setdefault(key, value)
+                    descendants.append(descendant)
+
+                return descendants               
+            except CypherError as cse:
+                print ('A Cypher error was encountered: '+ cse.message)
+                raise
+            except BaseException as be:
+                pprint(be)
+                raise be
+
 def getTypeCode(type_code):
     typeCodeDict = {str(HubmapConst.DATASET_TYPE_CODE).lower() : HubmapConst.DATASET_TYPE_CODE,
                     str(HubmapConst.DATASTAGE_TYPE_CODE).lower() : HubmapConst.DATASTAGE_TYPE_CODE,
