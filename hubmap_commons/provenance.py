@@ -61,7 +61,7 @@ class Provenance:
     provenance_config = {}
     
     metadata_ignore_attributes = [HubmapConst.ENTITY_TYPE_ATTRIBUTE, HubmapConst.PROVENANCE_CREATE_TIMESTAMP_ATTRIBUTE, HubmapConst.REFERENCE_UUID_ATTRIBUTE, 
-                                  HubmapConst.UUID_ATTRIBUTE, HubmapConst.SOURCE_UUID_ATTRIBUTE, HubmapConst.NAME_ATTRIBUTE]
+                                  HubmapConst.UUID_ATTRIBUTE, HubmapConst.SOURCE_UUID_ATTRIBUTE, HubmapConst.SOURCE_DISPLAY_ID_ATTRIBUTE, HubmapConst.NAME_ATTRIBUTE]
     
     known_attribute_map = {HubmapConst.PROVENANCE_GROUP_NAME_ATTRIBUTE : ProvConst.HUBMAP_PROV_GROUP_NAME, HubmapConst.PROVENANCE_GROUP_UUID_ATTRIBUTE : ProvConst.HUBMAP_PROV_GROUP_UUID,
                            HubmapConst.PROVENANCE_USER_DISPLAYNAME_ATTRIBUTE: ProvConst.HUBMAP_PROV_USER_DISPLAY_NAME, HubmapConst.PROVENANCE_USER_EMAIL_ATTRIBUTE: ProvConst.HUBMAP_PROV_USER_EMAIL,

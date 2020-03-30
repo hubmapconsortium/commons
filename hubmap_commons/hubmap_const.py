@@ -89,10 +89,12 @@ class HubmapConst(object):
     SPECIMEN_TYPE_ATTRIBUTE = 'specimen_type'
     LAB_IDENTIFIER_ATTRIBUTE = 'hubmap_identifier'
     NEXT_IDENTIFIER_ATTRIBUTE = 'next_identifier'
+    NEXT_DATASET_IDENTIFIER_ATTRIBUTE = 'next_dataset_identifier'
     DATASET_GLOBUS_DIRECTORY_PATH_ATTRIBUTE = 'globus_directory_url_path'
     DATASET_LOCAL_DIRECTORY_PATH_ATTRIBUTE = 'local_directory_url_path'
     ORGAN_TYPE_ATTRIBUTE = 'organ'
     SOURCE_UUID_ATTRIBUTE = 'source_uuid'
+    SOURCE_DISPLAY_ID_ATTRIBUTE = 'source_display_id'
     RUI_LOCATION_ATTRIBUTE = 'rui_location'
     
     
