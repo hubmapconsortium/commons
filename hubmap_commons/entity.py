@@ -753,12 +753,7 @@ class Entity(object):
                     descendant = {}
                     descendant.update(record.get('d')._properties)
                     for key, value in record.get('dm')._properties.items():
-                        if key == 'ingest_metadata':
-                            ingest_metadata = ast.literal_eval(value)
-                            for key, value in ingest_metadata.items():
-                                descendant.setdefault(key, value)
-                        else:
-                            descendant.setdefault(key, value)
+                        descendant.setdefault(key, value)
                     descendants.append(descendant)
 
                 return descendants               
