@@ -14,6 +14,7 @@ from hubmap_commons.hm_auth import AuthCache, AuthHelper
 import pprint
 from flask import Response
 from hubmap_commons.autherror import AuthError
+import ast
 
 class Entity(object):
     '''
@@ -724,7 +725,17 @@ class Entity(object):
                     ancestor = {}
                     ancestor.update(record.get('a')._properties)
                     for key, value in record.get('am')._properties.items():
-                        ancestor.setdefault(key, value)
+                        if key == 'ingest_metadata':
+                            ingest_metadata = ast.literal_eval(value)
+                            if ingest_metadata is not None:
+                                for key, value in ingest_metadata.items():
+                                    # ancestor.setdefault(key, value)
+                                    if key in ["metadata"]:
+                                        ancestor.setdefault(key, str(value))
+                                    else:
+                                        ancestor.setdefault(key, value)
+                        else:
+                            ancestor.setdefault(key, value)
                     ancestors.append(ancestor)
 
                 return ancestors               
@@ -753,9 +764,20 @@ class Entity(object):
                     descendant = {}
                     descendant.update(record.get('d')._properties)
                     for key, value in record.get('dm')._properties.items():
-                        descendant.setdefault(key, value)
-                    descendants.append(descendant)
+                        if key == 'ingest_metadata':
+                            ingest_metadata = ast.literal_eval(value)
+                            if ingest_metadata is not None:
+                                for key, value in ingest_metadata.items():
+                                    # descendant.setdefault(key, value)
+                                    if key in ["metadata"]:
+                                        descendant.setdefault(key, str(value))
+                                    else:
+                                        descendant.setdefault(key, value)
+                        else:
+                            descendant.setdefault(key, value)
 
+                    descendants.append(descendant)
+                
                 return descendants               
             except CypherError as cse:
                 print ('A Cypher error was encountered: '+ cse.message)
