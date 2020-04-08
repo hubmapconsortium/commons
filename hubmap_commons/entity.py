@@ -482,6 +482,37 @@ class Entity(object):
                 raise
 
     @staticmethod
+    def get_entities_by_types(driver, types): 
+        with driver.session() as session:
+            entities = []
+
+            if len(types) == 0: return entities
+
+            # by default assume Entity type
+            type_attrib = HubmapConst.ENTITY_TYPE_ATTRIBUTE
+            type_codes_str = "[" + ','.join([f"'{getTypeCode(t)}'" for t in types]) + "]"
+
+            try:     
+                stmt = f'MATCH (e:Entity), (e)-[r1:HAS_METADATA]->(m) WHERE e.entitytype IN {type_codes_str} RETURN e, m'
+
+                for record in session.run(stmt):
+                    entity = {}
+                    entity.update(record.get('e')._properties)
+                    for key, value in record.get('m')._properties.items():
+                        entity.setdefault(key, value)
+                    entities.append(entity)
+
+                return entities
+            except CypherError as cse:
+                print ('A Cypher error was encountered: '+ cse.message)
+                raise
+            except:
+                print ('A general error occurred: ')
+                for x in sys.exc_info():
+                    print (x)
+                raise
+
+    @staticmethod
     def get_entities_by_metadata_attribute(driver, attribute_name, attribute_code): 
         with driver.session() as session:
             return_list = []
@@ -725,17 +756,17 @@ class Entity(object):
                     ancestor = {}
                     ancestor.update(record.get('a')._properties)
                     for key, value in record.get('am')._properties.items():
-                        if key == 'ingest_metadata':
-                            ingest_metadata = ast.literal_eval(value)
-                            if ingest_metadata is not None:
-                                for key, value in ingest_metadata.items():
-                                    # ancestor.setdefault(key, value)
-                                    if key in ["metadata"]:
-                                        ancestor.setdefault(key, str(value))
-                                    else:
-                                        ancestor.setdefault(key, value)
-                        else:
-                            ancestor.setdefault(key, value)
+                        # if key == 'ingest_metadata':
+                        #     ingest_metadata = ast.literal_eval(value)
+                        #     if ingest_metadata is not None:
+                        #         for key, value in ingest_metadata.items():
+                        #             # ancestor.setdefault(key, value)
+                        #             if key in ["metadata"]:
+                        #                 ancestor.setdefault(key, str(value))
+                        #             else:
+                        #                 ancestor.setdefault(key, value)
+                        # else:
+                        ancestor.setdefault(key, value)
                     ancestors.append(ancestor)
 
                 return ancestors               
@@ -764,17 +795,17 @@ class Entity(object):
                     descendant = {}
                     descendant.update(record.get('d')._properties)
                     for key, value in record.get('dm')._properties.items():
-                        if key == 'ingest_metadata':
-                            ingest_metadata = ast.literal_eval(value)
-                            if ingest_metadata is not None:
-                                for key, value in ingest_metadata.items():
-                                    # descendant.setdefault(key, value)
-                                    if key in ["metadata"]:
-                                        descendant.setdefault(key, str(value))
-                                    else:
-                                        descendant.setdefault(key, value)
-                        else:
-                            descendant.setdefault(key, value)
+                        # if key == 'ingest_metadata':
+                        #     ingest_metadata = ast.literal_eval(value)
+                        #     if ingest_metadata is not None:
+                        #         for key, value in ingest_metadata.items():
+                        #             # descendant.setdefault(key, value)
+                        #             if key in ["metadata"]:
+                        #                 descendant.setdefault(key, str(value))
+                        #             else:
+                        #                 descendant.setdefault(key, value)
+                        # else:
+                        descendant.setdefault(key, value)
 
                     descendants.append(descendant)
                 
