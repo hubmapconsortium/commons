@@ -3,8 +3,10 @@ property==2.2
 mysql-connector-python==8.0.16
 flask==1.0.2
 globus-sdk==1.7.1
-property==2.2
 urllib3==1.24.2
 neo4j==1.7.2
 prov==1.5.3
 pytz==2019.1
+jsonschema==3.2.0
+requests>=1.2
+jsonref-ap==0.3.dev0
