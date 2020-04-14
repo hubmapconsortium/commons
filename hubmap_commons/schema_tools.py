@@ -1,9 +1,6 @@
-#! /usr/bin/env python
-
 import json
 import os
 from os.path import join, splitext
-from pathlib import Path
 from urllib import parse as urlparse
 from urllib.request import urlopen
 
@@ -14,17 +11,17 @@ from jsonschema import validate
 from jsonschema.exceptions import ValidationError, SchemaError
 from jsonschema.validators import Draft7Validator as Validator
 
-_SCHEMA_BASE_PATH = str(Path(__file__).resolve().parent.parent / 'tests' / 'test_files')
+_SCHEMA_BASE_PATH = None
+_SCHEMA_BASE_URI = None
 
-_SCHEMA_BASE_URI = 'http://schemata.hubmapconsortium.org/'
 
-
-# TODO: Set _SCHEMA_BASE_PATH to None/null.
-# TODO: Raise SchemaError if _SCHEMA_BASE_PATH hasn't been set.
-
-def set_schema_base_path(base_path):
-    global _SCHEMA_BASE_PATH
-    _SCHEMA_BASE_PATH = os.path.abspath(base_path)
+def set_schema_base_path(base_path: str):
+    if _SCHEMA_BASE_PATH and _SCHEMA_BASE_URI:
+        global _SCHEMA_BASE_PATH
+        _SCHEMA_BASE_PATH = os.path.abspath(base_path)
+    else:
+        raise SchemaError("Make sure to first set _SCHEMA_BASE_PATH to the location of the json/yaml file to process, "
+                          "and _SCHEMA_BASE_URI to the corresponding URI.")
 
 
 class LocalJsonLoader(jsonref.JsonLoader):
@@ -91,11 +88,13 @@ def _load_json_schema(filename):
                             jsonschema=True, load_on_repr=False)
 
 
-def assert_json_matches_schema(jsondata, schema_filename):
+def assert_json_matches_schema(jsondata, base_path: str, schema_filename: str):
     """
     raises AssertionError if the schema in schema_filename
     is invalid, or if the given jsondata does not match the schema.
     """
+    set_schema_base_path(base_path=base_path)
+
     schema = _load_json_schema(schema_filename)
     # print('FINAL SCHEMA FOLLOWS')
     # print(schema)
@@ -108,7 +107,7 @@ def assert_json_matches_schema(jsondata, schema_filename):
         raise AssertionError('json does not match {}: {}'.format(schema_filename, e))
 
 
-def check_json_matches_schema(jsondata, schema_filename):
+def check_json_matches_schema(jsondata, base_path: str, schema_filename: str):
     """
     Check the given json data against the jsonschema in the given schema file,
     raising an exception on error.  The exception text includes one or more
@@ -118,6 +117,8 @@ def check_json_matches_schema(jsondata, schema_filename):
 
     may raise SchemaError or ValidationError
     """
+    set_schema_base_path(base_path=base_path)
+
     try:
         validator = Validator(_load_json_schema(schema_filename))
     except SchemaError as e:
@@ -127,53 +128,3 @@ def check_json_matches_schema(jsondata, schema_filename):
         err_msg_l.append('{}: {}'.format(' '.join([str(word) for word in error.path]), error.message))
     if err_msg_l:
         raise ValidationError(' + '.join(err_msg_l))
-
-
-def main():
-    sample_json = {
-        'files': [
-            {'rel_path': './trig_rnaseq_10x.py', 'type': 'unknown', 'size': 2198,
-             'sha1sum': '8cbba27b76806091ec1041bc7994dfc89c60a4e2'},
-            {'rel_path': './utils.py', 'filetype': 'unknown', 'size': 5403,
-             'sha1sum': 'd910cf4a1d2b6ef928b449b906d79cab5dad1692'},
-            {'rel_path': './scan_and_begin_processing.py', 'filetype': 'unknown', 'size': 6977,
-             'sha1sum': 'c5b981ec9ddb922c84ba67127485cfa6819f79da'},
-            {'rel_path': './mock_ingest_vanderbilt.py', 'filetype': 'unknown', 'size': 3477,
-             'sha1sum': 'bf6fbb87e4dc1425525f91ce4c2238a2cc851d01'},
-            {'rel_path': './mock_ingest_rnaseq_10x.py', 'filetype': 'unknown', 'size': 3654,
-             'sha1sum': '93f204cf3878e3095a83651d2046d5393008844c'}
-        ],
-        'dag_provenance': {'trig_codex.py': '0123456789abcdefABCDEF'}
-    }
-    bad_json = {
-        'files': [
-            {'rel_path': './trig_rnaseq_10x.py', 'type': 'unknown', 'size': 2198,
-             'sha1sum': '8cbba27b76806091ec1041bc7994dfc89c60a4e2'},
-            {'rel_path': './utils.py', 'filetype': 'unknown', 'size': 5403,
-             'sha1sum': 'd910cf4a1d2b6ef928b449b906d79cab5dad1692'},
-            {'rel_path': './scan_and_begin_processing.py', 'filetype': 'unknown', 'size': 6977,
-             'sha1sum': 'c5b981ec9ddb922c84ba67127485cfa6819f79da'},
-            {'rel_path': './mock_ingest_vanderbilt.py', 'filetype': 'dubious', 'size': 3477,
-             'sha1sum': 'bf6fbb87e4dc1425525f91ce4c2238a2cc851d01'},
-            {'rel_path': './mock_ingest_rnaseq_10x.py', 'filetype': 'unknown', 'size': 3654,
-             'sha1sum': '93f204cf3878e3095a83651d2046d5393008844'}
-        ],
-        'dag_provenance': {'trig_codex.py': '0123456789abcdefABCDEFG'}
-    }
-
-    for lbl, jsondata in [('correct', sample_json), ('incorrect', bad_json)]:
-        try:
-            assert_json_matches_schema(jsondata, 'dataset_metadata_schema.yml')
-            print('assertion passed for {}'.format(lbl))
-        except AssertionError as e:
-            print('assertion failed for {}: {}'.format(lbl, e))
-
-        try:
-            check_json_matches_schema(jsondata, 'dataset_metadata_schema.json')
-            print('check passed for {}'.format(lbl))
-        except (SchemaError, ValidationError) as e:
-            print('check failed for {}: {}'.format(lbl, e))
-
-
-if __name__ == "__main__":
-    main()
