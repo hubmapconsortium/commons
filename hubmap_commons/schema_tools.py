@@ -15,13 +15,22 @@ _SCHEMA_BASE_PATH = None
 _SCHEMA_BASE_URI = None
 
 
-def set_schema_base_path(base_path: str):
-    if _SCHEMA_BASE_PATH and _SCHEMA_BASE_URI:
-        global _SCHEMA_BASE_PATH
-        _SCHEMA_BASE_PATH = os.path.abspath(base_path)
-    else:
-        raise SchemaError("Make sure to first set _SCHEMA_BASE_PATH to the location of the json/yaml file to process, "
-                          "and _SCHEMA_BASE_URI to the corresponding URI.")
+def set_schema_base_path(base_path: str, base_uri: str):
+    global _SCHEMA_BASE_PATH
+    _SCHEMA_BASE_PATH = os.path.abspath(base_path)
+
+    global _SCHEMA_BASE_URI
+    _SCHEMA_BASE_URI = base_uri
+
+
+def check_schema_base_path():
+    if not _SCHEMA_BASE_PATH:
+        raise SchemaError("Make sure to first set _SCHEMA_BASE_PATH (base_path) to the location of the json/yaml "
+                          "file to process.")
+
+    if not _SCHEMA_BASE_URI:
+        raise SchemaError("Make sure to first set _SCHEMA_BASE_URI (base_uri) to the location of the json/yaml "
+                          "file to process, and _SCHEMA_BASE_URI to the corresponding URI.")
 
 
 class LocalJsonLoader(jsonref.JsonLoader):
@@ -81,6 +90,7 @@ def _load_json_schema(filename):
     The filename is relative to the root schema directory.
     JSON and YAML formats are supported.
     """
+    check_schema_base_path()
     loader = LocalJsonLoader(_SCHEMA_BASE_PATH)
     src_uri = 'file:///{}'.format(filename)
     base_uri = '{}{}'.format(_SCHEMA_BASE_URI, filename)
@@ -88,12 +98,12 @@ def _load_json_schema(filename):
                             jsonschema=True, load_on_repr=False)
 
 
-def assert_json_matches_schema(jsondata, base_path: str, schema_filename: str):
+def assert_json_matches_schema(jsondata, base_path: str, schema_filename: str, base_uri: str = ""):
     """
     raises AssertionError if the schema in schema_filename
     is invalid, or if the given jsondata does not match the schema.
     """
-    set_schema_base_path(base_path=base_path)
+    set_schema_base_path(base_path=base_path, base_uri=base_uri)
 
     schema = _load_json_schema(schema_filename)
     # print('FINAL SCHEMA FOLLOWS')
@@ -105,9 +115,11 @@ def assert_json_matches_schema(jsondata, base_path: str, schema_filename: str):
         raise AssertionError('{} is an invalid schema: {}'.format(schema_filename, e))
     except ValidationError as e:
         raise AssertionError('json does not match {}: {}'.format(schema_filename, e))
+    else:
+        return True
 
 
-def check_json_matches_schema(jsondata, base_path: str, schema_filename: str):
+def check_json_matches_schema(jsondata, base_path: str, schema_filename: str, base_uri: str = ""):
     """
     Check the given json data against the jsonschema in the given schema file,
     raising an exception on error.  The exception text includes one or more
@@ -117,14 +129,17 @@ def check_json_matches_schema(jsondata, base_path: str, schema_filename: str):
 
     may raise SchemaError or ValidationError
     """
-    set_schema_base_path(base_path=base_path)
+    set_schema_base_path(base_path=base_path, base_uri=base_uri)
 
     try:
         validator = Validator(_load_json_schema(schema_filename))
     except SchemaError as e:
         raise SchemaError('{} is invalid: {}'.format(schema_filename, e))
+
     err_msg_l = []
     for error in validator.iter_errors(jsondata):
         err_msg_l.append('{}: {}'.format(' '.join([str(word) for word in error.path]), error.message))
     if err_msg_l:
         raise ValidationError(' + '.join(err_msg_l))
+    else:
+        return True

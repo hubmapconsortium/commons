@@ -1,23 +1,12 @@
 import unittest
-import configparser
-import sys
-import os
-
 from pathlib import Path
 
-from hubmap_commons.provenance import Provenance
-from hubmap_commons.neo4j_connection import Neo4jConnection
-from hubmap_commons.entity import Entity
 from hubmap_commons import schema_tools
 
 
-class MyTestCase(unittest.TestCase):
+class SchemaToolsTestCase(unittest.TestCase):
     def setUp(self):
-        base_path = str(Path(__file__).resolve().parent.parent / 'tests' / 'test_files')
-
-        base_uri = 'http://schemata.hubmapconsortium.org/'
-
-        sample_json = {
+        self.sample_json = {
             'files': [
                 {'rel_path': './trig_rnaseq_10x.py', 'type': 'unknown', 'size': 2198,
                  'sha1sum': '8cbba27b76806091ec1041bc7994dfc89c60a4e2'},
@@ -32,7 +21,7 @@ class MyTestCase(unittest.TestCase):
             ],
             'dag_provenance': {'trig_codex.py': '0123456789abcdefABCDEF'}
         }
-        bad_json = {
+        self.bad_json = {
             'files': [
                 {'rel_path': './trig_rnaseq_10x.py', 'type': 'unknown', 'size': 2198,
                  'sha1sum': '8cbba27b76806091ec1041bc7994dfc89c60a4e2'},
@@ -48,24 +37,49 @@ class MyTestCase(unittest.TestCase):
             'dag_provenance': {'trig_codex.py': '0123456789abcdefABCDEFG'}
         }
 
-        for lbl, jsondata in [('correct', sample_json), ('incorrect', bad_json)]:
-            try:
-                schema_tools.assert_json_matches_schema(jsondata, 'dataset_metadata_schema.yml')
-                print('assertion passed for {}'.format(lbl))
-            except AssertionError as e:
-                print('assertion failed for {}: {}'.format(lbl, e))
+    def test_assertion_json_matches_schema(self):
+        base_path = str(Path(__file__).resolve().parent.parent / 'tests' / 'test_files')
+        base_uri = 'http://schemata.hubmapconsortium.org/'
 
-            try:
-                schema_tools.check_json_matches_schema(jsondata, 'dataset_metadata_schema.json')
-                print('check passed for {}'.format(lbl))
-            except (schema_tools.SchemaError, schema_tools.ValidationError) as e:
-                print('check failed for {}: {}'.format(lbl, e))
+        lbl, jsondata = 'correct', self.sample_json
+        try:
+            result = schema_tools.assert_json_matches_schema(jsondata=jsondata,
+                                                             base_path=base_path,
+                                                             base_uri=base_uri,
+                                                             schema_filename='dataset_metadata_schema.yml')
+            self.assertTrue(result)
+            print('assertion passed for {}'.format(lbl))
+        except AssertionError as e:
+            print('assertion failed for {}: {}'.format(lbl, e))
 
-    def tearDown(self):
-        pass
+        lbl, jsondata = 'incorrect', self.bad_json
+        with self.assertRaises(AssertionError):
+            schema_tools.assert_json_matches_schema(jsondata=jsondata,
+                                                    base_path=base_path,
+                                                    base_uri=base_uri,
+                                                    schema_filename='dataset_metadata_schema.yml')
 
-    def test_something(self):
-        self.assertEqual(True, False)
+    def test_check_json_matches_schema(self):
+        base_path = str(Path(__file__).resolve().parent.parent / 'tests' / 'test_files')
+        base_uri = 'http://schemata.hubmapconsortium.org/'
+
+        lbl, jsondata = 'correct', self.sample_json
+        try:
+            result = schema_tools.check_json_matches_schema(jsondata=jsondata,
+                                                            base_path=base_path,
+                                                            base_uri=base_uri,
+                                                            schema_filename='dataset_metadata_schema.json')
+            self.assertTrue(result)
+            print('check passed for {}'.format(lbl))
+        except (schema_tools.SchemaError, schema_tools.ValidationError) as e:
+            print('check failed for {}: {}'.format(lbl, e))
+
+        lbl, jsondata = ('incorrect', self.bad_json)
+        with self.assertRaises(schema_tools.ValidationError):
+            schema_tools.check_json_matches_schema(jsondata=jsondata,
+                                                   base_path=base_path,
+                                                   base_uri=base_uri,
+                                                   schema_filename='dataset_metadata_schema.json')
 
 
 if __name__ == '__main__':
