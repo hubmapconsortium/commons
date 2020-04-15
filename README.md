@@ -21,6 +21,13 @@ The code includes:
 
 * **provenance.py** extracts provenance related information from a token
 
+* **schema_tools.py** checks a JSON structure vs a schema definition using two main methods. 
+
+    - `check_json_matches_schema(jsondata, base_path: str, schema_filename: str, base_uri: str = "")`
+    Checks the given json data against the jsonschema in the given schema file, raising an exception on error. The exception text includes one or more validation error messages.
+    - `assert_json_matches_schema(jsondata, base_path: str, schema_filename: str, base_uri: str = "")` 
+    Raises AssertionError if the schema in schema_filename is invalid, or if the given jsondata does not match the schema.
+    
 * **stirng_helper.py** contains several string related functions (listToCommaSeparated, getYesNo, etc.)
 
 * **test_ws.py** contains a test Web Service.  This service can be run by copying hubmap_commons/common_app.conf.example to hubmap_commons/common_app.conf and providing a Globus client id and secret (available at https://developers.globus.org) then directly running test_ws.py from the hubmap_commons/ directory.  The service has a useful /login method that can be used to generate Globus auth tokens for testing.  Note: For much of HuBMAP a Globus "nexus" token used to access the globus Nexus APIs.  To generate a nexus token the Client ID must be authorized for this.  Client IDs are available from the developers of this repository to generate nexus tokens for use against HuBMAP APIs.
