@@ -20,6 +20,7 @@ setup(
                       'jsonschema==3.2.0',
                       'requests==1.2',
                       'jsonref-ap==0.3.dev0',
+                      'PyYAML==5.3.1'
                       ],
     classifiers=[
         "Programming Language :: Python :: 3",
