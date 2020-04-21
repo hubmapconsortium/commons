@@ -18,7 +18,7 @@ setup(
     install_requires=['prov', 'pytz', 'flask_cors', 'property', 'mysql-connector-python',
                       'flask', 'globus-sdk', 'urllib3', 'neo4j',
                       'jsonschema==3.2.0',
-                      'requests==1.2',
+                      'requests>=2.22.0',
                       'jsonref-ap==0.3.dev0',
                       'PyYAML==5.3.1'
                       ],

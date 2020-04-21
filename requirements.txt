@@ -8,6 +8,6 @@ neo4j==1.7.2
 prov==1.5.3
 pytz==2019.1
 jsonschema==3.2.0
-requests>=1.2
+requests>==2.22.0
 jsonref-ap==0.3.dev0
 PyYAML==5.3.1
