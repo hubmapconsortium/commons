@@ -498,8 +498,7 @@ class Entity(object):
                 for record in session.run(stmt):
                     entity = {}
                     entity.update(record.get('e')._properties)
-                    for key, value in record.get('m')._properties.items():
-                        entity.setdefault(key, value)
+                    entity['metadata'] = record.get('m')._properties
                     entities.append(entity)
 
                 return entities
@@ -755,18 +754,9 @@ class Entity(object):
                     ancestor_ids.append(record.get('a')['uuid'])
                     ancestor = {}
                     ancestor.update(record.get('a')._properties)
+                    ancestor['metadata'] = {}
                     for key, value in record.get('am')._properties.items():
-                        # if key == 'ingest_metadata':
-                        #     ingest_metadata = ast.literal_eval(value)
-                        #     if ingest_metadata is not None:
-                        #         for key, value in ingest_metadata.items():
-                        #             # ancestor.setdefault(key, value)
-                        #             if key in ["metadata"]:
-                        #                 ancestor.setdefault(key, str(value))
-                        #             else:
-                        #                 ancestor.setdefault(key, value)
-                        # else:
-                        ancestor.setdefault(key, value)
+                        ancestor['metadata'].setdefault(key, value)
                     ancestors.append(ancestor)
 
                 return ancestors               
@@ -794,22 +784,67 @@ class Entity(object):
                     descendant_ids.append(record.get('d')['uuid'])
                     descendant = {}
                     descendant.update(record.get('d')._properties)
+                    descendant['metadata'] = {}
                     for key, value in record.get('dm')._properties.items():
-                        # if key == 'ingest_metadata':
-                        #     ingest_metadata = ast.literal_eval(value)
-                        #     if ingest_metadata is not None:
-                        #         for key, value in ingest_metadata.items():
-                        #             # descendant.setdefault(key, value)
-                        #             if key in ["metadata"]:
-                        #                 descendant.setdefault(key, str(value))
-                        #             else:
-                        #                 descendant.setdefault(key, value)
-                        # else:
-                        descendant.setdefault(key, value)
+                        descendant['metadata'].setdefault(key, value)
 
                     descendants.append(descendant)
                 
                 return descendants               
+            except CypherError as cse:
+                print ('A Cypher error was encountered: '+ cse.message)
+                raise
+            except BaseException as be:
+                pprint(be)
+                raise be
+    
+    @staticmethod
+    def get_parents(driver, uuid):
+        '''
+        Get all parents by uuid
+        '''
+        with driver.session() as session:
+            parents = []
+            try:
+                stmt = f'''MATCH (e:Entity {{ {HubmapConst.UUID_ATTRIBUTE}: '{uuid}' }})<-[ACTIVITY_OUTPUT]-(e1)
+                <-[r:ACTIVITY_INPUT|:ACTIVITY_OUTPUT]-(a:Entity), (e)-[r1:HAS_METADATA]->(m), (a)-[r2:HAS_METADATA]->(am) 
+                RETURN e, m, a, am'''
+
+                for record in session.run(stmt, uuid=uuid):
+                    parent = {}
+                    parent.update(record.get('a')._properties)
+                    parent['metadata'] = record.get('am')._properties
+
+                    parents.append(parent)
+                
+                return parents               
+            except CypherError as cse:
+                print ('A Cypher error was encountered: '+ cse.message)
+                raise
+            except BaseException as be:
+                pprint(be)
+                raise be
+    
+    @staticmethod
+    def get_children(driver, uuid):
+        '''
+        Get all children by uuid
+        '''
+        with driver.session() as session:
+            children = []
+            try:
+                stmt = f'''MATCH (e:Entity {{ {HubmapConst.UUID_ATTRIBUTE}: '{uuid}' }})-[:ACTIVITY_INPUT]->
+                        (a:Activity)-[r:ACTIVITY_INPUT|:ACTIVITY_OUTPUT]->(d:Entity), (e)-[r1:HAS_METADATA]->(m), (d)-[r2:HAS_METADATA]->(dm) 
+                        RETURN DISTINCT e, m, d, dm'''
+
+                for record in session.run(stmt, uuid=uuid):
+                    child = {}
+                    child.update(record.get('d')._properties)
+                    child['metadata'] = record.get('dm')._properties
+
+                    children.append(child)
+                
+                return children               
             except CypherError as cse:
                 print ('A Cypher error was encountered: '+ cse.message)
                 raise
