@@ -23,9 +23,9 @@ The code includes:
 
 * **schema_tools.py** checks a JSON structure vs a schema definition using two main methods. 
 
-    - `check_json_matches_schema(jsondata, base_path: str, schema_filename: str, base_uri: str = "")`
+    - `check_json_matches_schema(jsondata, schema_filename: str, base_path: str = "", base_uri: str = "")`
     Checks the given json data against the jsonschema in the given schema file, raising an exception on error. The exception text includes one or more validation error messages.
-    - `assert_json_matches_schema(jsondata, base_path: str, schema_filename: str, base_uri: str = "")` 
+    - `assert_json_matches_schema(jsondata, schema_filename: str, base_path: str = "", base_uri: str = "")` 
     Raises AssertionError if the schema in schema_filename is invalid, or if the given jsondata does not match the schema.
     
 * **stirng_helper.py** contains several string related functions (listToCommaSeparated, getYesNo, etc.)
