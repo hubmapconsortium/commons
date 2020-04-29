@@ -21,8 +21,8 @@ def getYesNo(msg):
         elif ans == "n":
             return False     
 
-def listToCommaSeparated(lst, quoteChar = None, trimAndUpperCase = False):
-    comma = ""
+def listToDelimited(lst, delimitChar = ", ", quoteChar = None, trimAndUpperCase = False):
+    delimiter = ""
     rVal = ""
     first = True
     if quoteChar is None:
@@ -34,8 +34,11 @@ def listToCommaSeparated(lst, quoteChar = None, trimAndUpperCase = False):
             pVal = val
         if trimAndUpperCase:
             pVal = pVal.strip().upper()
-        rVal = rVal + comma + quoteChar + pVal + quoteChar
+        rVal = rVal + delimiter + quoteChar + pVal + quoteChar
         if first:
             first = False
-            comma = ", "
+            delimiter = delimitChar
     return(rVal)
+
+def listToCommaSeparated(lst, quoteChar = None, trimAndUpperCase = False):
+    return(listToDelimited(lst, ", ", quoteChar, trimAndUpperCase))

@@ -89,10 +89,22 @@ def log_subprocess_output(pipe):
 #make sure the supplied argument (val) ends
 #with a file path separator
 def ensureTrailingSlash(val):
-    v2 = val.strip();
+    v2 = val.strip()
     if not v2.endswith(os.sep):
         v2 = v2 + os.sep
     return v2
+
+def ensureTrailingSlashURL(val):
+    v = val.strip()
+    if not v.endswith('/'):
+        v = v + '/'
+    return v
+
+def ensureBeginningSlashURL(val):
+    v = val.strip()
+    if not v.startswith('/'):
+        v = '/' + v
+    return v
 
 #check to make sure the ssh command is available
 def hasSSH():
