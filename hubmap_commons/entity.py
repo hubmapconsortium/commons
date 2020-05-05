@@ -754,9 +754,8 @@ class Entity(object):
                     ancestor_ids.append(record.get('a')['uuid'])
                     ancestor = {}
                     ancestor.update(record.get('a')._properties)
-                    ancestor['metadata'] = {}
-                    for key, value in record.get('am')._properties.items():
-                        ancestor['metadata'].setdefault(key, value)
+                    ancestor['metadata'] = record.get('am')._properties
+
                     ancestors.append(ancestor)
 
                 return ancestors               
@@ -784,9 +783,7 @@ class Entity(object):
                     descendant_ids.append(record.get('d')['uuid'])
                     descendant = {}
                     descendant.update(record.get('d')._properties)
-                    descendant['metadata'] = {}
-                    for key, value in record.get('dm')._properties.items():
-                        descendant['metadata'].setdefault(key, value)
+                    descendant['metadata'] = record.get('dm')._properties
 
                     descendants.append(descendant)
                 
