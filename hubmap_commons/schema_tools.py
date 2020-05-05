@@ -16,11 +16,13 @@ _SCHEMA_BASE_URI = None
 
 
 def set_schema_base_path(base_path: str, base_uri: str):
-    global _SCHEMA_BASE_PATH
-    _SCHEMA_BASE_PATH = os.path.abspath(base_path)
+    if base_path:
+        global _SCHEMA_BASE_PATH
+        _SCHEMA_BASE_PATH = os.path.abspath(base_path)
 
-    global _SCHEMA_BASE_URI
-    _SCHEMA_BASE_URI = base_uri
+    if base_uri:
+        global _SCHEMA_BASE_URI
+        _SCHEMA_BASE_URI = base_uri
 
 
 def check_schema_base_path():
@@ -98,7 +100,7 @@ def _load_json_schema(filename):
                             jsonschema=True, load_on_repr=False)
 
 
-def assert_json_matches_schema(jsondata, base_path: str, schema_filename: str, base_uri: str = ""):
+def assert_json_matches_schema(jsondata, schema_filename: str, base_path: str = "", base_uri: str = ""):
     """
     raises AssertionError if the schema in schema_filename
     is invalid, or if the given jsondata does not match the schema.
@@ -106,9 +108,6 @@ def assert_json_matches_schema(jsondata, base_path: str, schema_filename: str, b
     set_schema_base_path(base_path=base_path, base_uri=base_uri)
 
     schema = _load_json_schema(schema_filename)
-    # print('FINAL SCHEMA FOLLOWS')
-    # print(schema)
-    # print('END FINAL SCHEMA')
     try:
         validate(instance=jsondata, schema=schema)
     except SchemaError as e:
@@ -119,7 +118,7 @@ def assert_json_matches_schema(jsondata, base_path: str, schema_filename: str, b
         return True
 
 
-def check_json_matches_schema(jsondata, base_path: str, schema_filename: str, base_uri: str = ""):
+def check_json_matches_schema(jsondata, schema_filename: str, base_path: str = "", base_uri: str = ""):
     """
     Check the given json data against the jsonschema in the given schema file,
     raising an exception on error.  The exception text includes one or more

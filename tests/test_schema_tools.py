@@ -2,6 +2,7 @@ import unittest
 from pathlib import Path
 
 from hubmap_commons import schema_tools
+from jsonschema import exceptions as jsonschema_exceptions
 
 
 class SchemaToolsTestCase(unittest.TestCase):
@@ -37,6 +38,11 @@ class SchemaToolsTestCase(unittest.TestCase):
             'dag_provenance': {'trig_codex.py': '0123456789abcdefABCDEFG'}
         }
 
+    def tearDown(self):
+        from hubmap_commons import schema_tools
+        schema_tools._SCHEMA_BASE_PATH = None
+        schema_tools._SCHEMA_BASE_URI = None
+
     def test_assertion_json_matches_schema(self):
         base_path = str(Path(__file__).resolve().parent.parent / 'tests' / 'test_files')
         base_uri = 'http://schemata.hubmapconsortium.org/'
@@ -59,6 +65,17 @@ class SchemaToolsTestCase(unittest.TestCase):
                                                     base_uri=base_uri,
                                                     schema_filename='dataset_metadata_schema.yml')
 
+    def test_assertion_json_matches_schema_optional_args_missing(self):
+        lbl, jsondata = 'correct', self.sample_json
+        with self.assertRaises(jsonschema_exceptions.SchemaError):
+            schema_tools.assert_json_matches_schema(jsondata=jsondata,
+                                                    schema_filename='dataset_metadata_schema.yml')
+
+        lbl, jsondata = 'incorrect', self.bad_json
+        with self.assertRaises(jsonschema_exceptions.SchemaError):
+            schema_tools.assert_json_matches_schema(jsondata=jsondata,
+                                                    schema_filename='dataset_metadata_schema.yml')
+
     def test_check_json_matches_schema(self):
         base_path = str(Path(__file__).resolve().parent.parent / 'tests' / 'test_files')
         base_uri = 'http://schemata.hubmapconsortium.org/'
@@ -79,6 +96,17 @@ class SchemaToolsTestCase(unittest.TestCase):
             schema_tools.check_json_matches_schema(jsondata=jsondata,
                                                    base_path=base_path,
                                                    base_uri=base_uri,
+                                                   schema_filename='dataset_metadata_schema.json')
+
+    def test_check_json_matches_schema_optional_args_missing(self):
+        lbl, jsondata = 'correct', self.sample_json
+        with self.assertRaises(jsonschema_exceptions.SchemaError):
+            schema_tools.check_json_matches_schema(jsondata=jsondata,
+                                                   schema_filename='dataset_metadata_schema.json')
+
+        lbl, jsondata = ('incorrect', self.bad_json)
+        with self.assertRaises(jsonschema_exceptions.SchemaError):
+            schema_tools.check_json_matches_schema(jsondata=jsondata,
                                                    schema_filename='dataset_metadata_schema.json')
 
 
