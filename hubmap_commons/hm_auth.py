@@ -69,6 +69,12 @@ def secured(func=None, groups=None, scopes=None):
         return secured_decorator(func)
     return secured_decorator
 
+def isAuthorized(conn, token, entity, entity_uuid):
+    try:
+        driver = conn.get_driver()
+        return entity.can_user_edit_entity(driver, token, entity_uuid)
+    except:
+        return False
 
 #A class to help with Globus authentication and authorization
 #this class is meant to be a singleton and should be accessed only
