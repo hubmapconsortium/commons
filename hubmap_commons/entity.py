@@ -16,7 +16,6 @@ from flask import Response
 from hubmap_commons.autherror import AuthError
 import ast
 import appconfig
-from _ast import Or
 
 class Entity(object):
     '''
