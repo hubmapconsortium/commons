@@ -15,6 +15,8 @@ import pprint
 from flask import Response
 from hubmap_commons.autherror import AuthError
 import ast
+import appconfig
+from _ast import Or
 
 class Entity(object):
     '''
@@ -28,57 +30,6 @@ class Entity(object):
         self.entity_config['APP_CLIENT_SECRET'] = app_client_secret
         self.entity_config['UUID_WEBSERVICE_URL'] = uuid_webservice_url
 
-    """def load_config_file(self):
-        config = configparser.ConfigParser()
-        try:
-            config.read(os.path.join(os.path.dirname(__file__), '..', 'common-api', 'app.properties'))
-
-            
-            self.entity_config['APP_CLIENT_ID'] = config.get('GLOBUS', 'APP_CLIENT_ID')
-            self.entity_config['APP_CLIENT_SECRET'] = config.get(
-                'GLOBUS', 'APP_CLIENT_SECRET')
-
-            
-            
-            self.entity_config['STAGING_ENDPOINT_UUID'] = config.get(
-                'GLOBUS', 'STAGING_ENDPOINT_UUID')
-            self.entity_config['PUBLISH_ENDPOINT_UUID'] = config.get(
-                'GLOBUS', 'PUBLISH_ENDPOINT_UUID')
-            self.entity_config['SECRET_KEY'] = config.get('GLOBUS', 'SECRET_KEY')
-            self.entity_config['UUID_UI_URL'] = config.get('HUBMAP', 'UUID_UI_URL')
-            #app.config['DEBUG'] = True
-        except OSError as err:
-            msg = "OS error.  Check config.ini file to make sure it exists and is readable: {0}".format(
-                err)
-            print(msg + "  Program stopped.")
-            exit(0)
-        except configparser.NoSectionError as noSectError:
-            msg = "Error reading the config.ini file.  Check config.ini file to make sure it matches the structure in config.ini.example: {0}".format(
-                noSectError)
-            print(msg + "  Program stopped.")
-            exit(0)
-        except configparser.NoOptionError as noOptError:
-            msg = "Error reading the config.ini file.  Check config.ini file to make sure it matches the structure in config.ini.example: {0}".format(
-                noOptError)
-            print(msg + "  Program stopped.")
-            exit(0)
-        except SyntaxError as syntaxError:
-            msg = "Error reading the config.ini file.  Check config.ini file to make sure it matches the structure in config.ini.example: {0}".format(
-                syntaxError)
-            msg = msg + "  Cannot read line: {0}".format(syntaxError.text)
-            print(msg + "  Program stopped.")
-            exit(0)
-        except AttributeError as attrError:
-            msg = "Error reading the config.ini file.  Check config.ini file to make sure it matches the structure in config.ini.example: {0}".format(
-                attrError)
-            msg = msg + "  Cannot read line: {0}".format(attrError.text)
-            print(msg + "  Program stopped.")
-            exit(0)
-        except:
-            msg = "Unexpected error:", sys.exc_info()[0]
-            print(msg + "  Program stopped.")
-            exit(0)
-    """
     
     @staticmethod
     # NOTE: This will return a single entity, activity, or agent
@@ -581,6 +532,98 @@ class Entity(object):
         return entity_list[0]                  
 
     @staticmethod
+    def get_entities_and_children_by_relationship(driver, identifier, relationship_label): 
+        '''Return an object representing the identifier plus its children associated with the relationship_label
+        
+        :param driver: the neo4j connection
+        :param identifier: a uuid for an entity.  This uuid will be used to find all the "children" entities
+            related to the uuid.
+        :param relationship_label: the name of a relationship in the neo4j graph.
+        
+        :return an object with the uuid attributes, plus an array with the children objects
+        '''
+        
+        """This Cypher query will return data about the incoming entity (identified by the identifier parameter)
+        and a list of all the entities associated with it given a particular relationship (the relationship_label parameter).
+        The query returns entity level information regarding the incoming entity (datatype, uuid, doi, display_doi, hubmap_identifier)
+        plus any connected metadata (entity_metadata_properties).  These records will repeat for each child returned.  For each
+        child, the query returns: child_entity_properties, child_metadata_properties.          
+        """
+        
+        stmt = """MATCH (entity)<-[:{relationship_label}]-(child_entity)
+        OPTIONAL MATCH (child_entity)-[:{has_metadata_attr}]->(child_metadata)
+        OPTIONAL MATCH (entity)-[:{has_metadata_attr}]->(entity_metadata)  
+        WHERE entity.{uuid_attrib}= '{identifier}' 
+        RETURN CASE WHEN entity.{entitytype} is not null THEN entity.{entitytype} 
+        WHEN entity.{activitytype} is not null THEN entity.{activitytype} ELSE entity.{agenttype} END AS datatype, 
+        entity.{uuid_attrib} AS uuid, entity.{doi_attrib} AS doi, entity.{doi_display_attrib} AS display_doi, 
+        entity.{hubmap_identifier_attrib} AS hubmap_identifier, properties(entity_metadata) AS entity_metadata_properties,
+        properties(child_entity) AS child_entity_properties, properties(child_metadata) AS child_metadata_properties
+        ORDER BY entity.{uuid_attrib}""".format(
+            identifier=identifier,uuid_attrib=HubmapConst.UUID_ATTRIBUTE, doi_attrib=HubmapConst.DOI_ATTRIBUTE, doi_display_attrib=HubmapConst.DISPLAY_DOI_ATTRIBUTE,
+                entitytype=HubmapConst.ENTITY_TYPE_ATTRIBUTE, activitytype=HubmapConst.ACTIVITY_TYPE_ATTRIBUTE, agenttype=HubmapConst.AGENT_TYPE_ATTRIBUTE,
+                hubmap_identifier_attrib=HubmapConst.LAB_IDENTIFIER_ATTRIBUTE,has_metadata_attr=HubmapConst.HAS_METADATA_REL,
+                relationship_label=relationship_label)
+        
+        with driver.session() as session:
+            child_list = []
+            return_object = {}
+            try:
+                for record in session.run(stmt):
+                    #only create the return object once
+                    if return_object == {}:
+                        return_object['uuid'] = record['uuid']
+                        return_object['entitytype'] = record['datatype']
+                        return_object['doi'] = record['doi']
+                        return_object['display_doi'] = record['display_doi']
+                        return_object['hubmap_identifier'] = record['hubmap_identifier']
+                        return_object['properties'] = record['entity_metadata_properties']
+                        if record['entity_metadata_properties'] != None:
+                            new_metadata_dict = {}
+                            for key in record['entity_metadata_properties'].keys():
+                                new_metadata_dict[key] = record['entity_metadata_properties'][key]
+                                # check to see if the current property contains an array or object
+                                if isinstance(record['entity_metadata_properties'][key], str):
+                                    if str(record['entity_metadata_properties'][key]).startswith('[') or str(record['child_metadata_properties'][key]).startswith('{'):
+                                        new_metadata_dict[key] = ast.literal_eval(record['entity_metadata_properties'][key])
+                            return_object['properties'] = new_metadata_dict
+                        else:
+                            return_object['child_metadata_properties'] = None
+                    child_object = {}
+                    if record['child_entity_properties'] != None:
+                        child_object['uuid'] = record['child_entity_properties']['uuid']
+                        child_object['entitytype'] = record['child_entity_properties']['entitytype']
+                        child_object['doi'] = record['child_entity_properties']['doi']
+                        child_object['display_doi'] = record['child_entity_properties']['display_doi']
+                        if 'hubmap_identifier' in record['child_entity_properties']:
+                            child_object['hubmap_identifier'] = record['child_entity_properties']['hubmap_identifier']
+                        if record['child_metadata_properties'] != None:
+                            new_metadata_dict = {}
+                            for key in record['child_metadata_properties'].keys():
+                                new_metadata_dict[key] = record['child_metadata_properties'][key]
+                                # check to see if the current property contains an array or object
+                                if isinstance(record['child_metadata_properties'][key], str):
+                                    if str(record['child_metadata_properties'][key]).startswith('[') or str(record['child_metadata_properties'][key]).startswith('{'):
+                                        new_metadata_dict[key] = ast.literal_eval(record['child_metadata_properties'][key])
+                            child_object['properties'] = new_metadata_dict
+                        else:
+                            record['child_metadata_properties'] = None
+                        # only add the child object if it has child_enity_properties
+                        child_list.append(child_object)
+                return_object['children'] = child_list
+                return return_object                   
+            except CypherError as cse:
+                print ('A Cypher error was encountered: '+ cse.message)
+                raise
+            except:
+                print ('A general error occurred: ')
+                for x in sys.exc_info():
+                    print (x)
+                raise
+        
+
+
+    @staticmethod
     def get_entities_by_relationship(driver, identifier, relationship_label, direction=None): 
         with driver.session() as session:
             return_list = []
@@ -868,8 +911,10 @@ def getTypeCode(type_code):
     return typeCodeDict[str(type_code).lower()]
 
 if __name__ == "__main__":
-    entity = Entity()
-    conn = Neo4jConnection()
+    #app_client_id, app_client_secret, uuid_webservice_url
+    confdata = appconfig.__dict__
+    entity = Entity(confdata['APP_CLIENT_ID'],confdata['APP_CLIENT_SECRET'],confdata['UUID_WEBSERVICE_URL'])
+    conn = Neo4jConnection(confdata['NEO4J_SERVER'], confdata['NEO4J_USERNAME'], confdata['NEO4J_PASSWORD'])
     driver = conn.get_driver()
     """group_info = entity.get_group_by_name('HuBMAP-UFlorida')
     print(group_info)
@@ -878,6 +923,7 @@ if __name__ == "__main__":
     group_info = entity.get_group_by_name('UFL')
     print(group_info)"""
     
+    """
     type_list = entity.get_entity_type_list(driver)
     print(type_list)
     
@@ -890,8 +936,10 @@ if __name__ == "__main__":
     
     entities_list = entity.get_entities_by_metadata_attribute(driver, HubmapConst.SPECIMEN_TYPE_ATTRIBUTE, 'ffpe_block')
     print(entities_list) 
-
-    
+    """
+    entities_list = entity.get_entities_and_children_by_relationship(driver, 'cc82c72adc8bb032b5044725107d2c7a', HubmapConst.IN_COLLECTION_REL) 
+    print(entities_list) 
+   
     
     """token = "AggQN13V56BW10NMY9e18vPen0rEEeDW5aorWD39gBx1j48pwycJC31pG8WXdvYdevkD8vGJa210qxc1ke58WSBgD6"
     writeable_groups = entity.get_writeable_user_groups(token)
