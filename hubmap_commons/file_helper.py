@@ -106,6 +106,12 @@ def ensureBeginningSlashURL(val):
         v = '/' + v
     return v
 
+def removeTrailingSlashURL(val):
+    v = val.strip()
+    if v.endswith('/'):
+        v = v[:-1]
+    return v
+
 #check to make sure the ssh command is available
 def hasSSH():
     return shutil.which("ssh") is not None

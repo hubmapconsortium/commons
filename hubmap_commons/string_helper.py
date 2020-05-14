@@ -42,3 +42,6 @@ def listToDelimited(lst, delimitChar = ", ", quoteChar = None, trimAndUpperCase 
 
 def listToCommaSeparated(lst, quoteChar = None, trimAndUpperCase = False):
     return(listToDelimited(lst, ", ", quoteChar, trimAndUpperCase))
+
+def allIndexes(value, character):
+    return [i for i, ltr in enumerate(value) if ltr == character]
