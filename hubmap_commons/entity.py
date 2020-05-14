@@ -15,7 +15,7 @@ import pprint
 from flask import Response
 from hubmap_commons.autherror import AuthError
 import ast
-import appconfig
+#import appconfig
 
 class Entity(object):
     '''
@@ -605,11 +605,9 @@ class Entity(object):
                                     if str(record['child_metadata_properties'][key]).startswith('[') or str(record['child_metadata_properties'][key]).startswith('{'):
                                         new_metadata_dict[key] = ast.literal_eval(record['child_metadata_properties'][key])
                             child_object['properties'] = new_metadata_dict
-                        else:
-                            record['child_metadata_properties'] = None
                         # only add the child object if it has child_enity_properties
                         child_list.append(child_object)
-                return_object['children'] = child_list
+                return_object['items'] = child_list
                 return return_object                   
             except CypherError as cse:
                 print ('A Cypher error was encountered: '+ cse.message)
