@@ -111,3 +111,4 @@ venv.bak/
 *.conf
 *.ini
 .DS_Store
+appconfig.py
