@@ -15,7 +15,7 @@ import pprint
 from flask import Response
 from hubmap_commons.autherror import AuthError
 import ast
-#import appconfig
+import appconfig
 
 class Entity(object):
     '''
@@ -36,13 +36,22 @@ class Entity(object):
         with driver.session() as session:
             return_list = []
             try:
-                #TODO: I can use the OR operator to match on either uuid or doi:
-                #MATCH (e) WHERE e.label= 'test dataset create file10' OR e.label= 'test dataset create file7' RETURN e
-                stmt = "MATCH (a) WHERE a.{uuid_attrib}= $identifier RETURN properties(a) as properties".format(uuid_attrib=HubmapConst.UUID_ATTRIBUTE)
+                match_clause = "MATCH (entity) "
+                where_clause = " WHERE entity.{uuid_attrib}= $identifier ".format(uuid_attrib=HubmapConst.UUID_ATTRIBUTE)
+                stmt = Entity.get_generic_entity_stmt(match_clause, where_clause)
 
+                current_uuid = None
+                
+                # this code assumes there will be only one entity returned
                 for record in session.run(stmt, identifier=identifier):
-                    dataset_record = record['properties']
-                    return_list.append(dataset_record)
+                    dataset_record = record['entity_properties']
+                    #while running through the data returned, only
+                    #keep one set of entity properties per uuid
+                    #in general, there should only be one entity returned
+                    # but the entities may have multiple descendants 
+                    if current_uuid != record['uuid']:
+                        current_uuid = record['uuid']                    
+                        return_list.append(dataset_record)
                 if len(return_list) == 0:
                     raise LookupError('Unable to find entity using identifier:' + identifier)
                 if len(return_list) > 1:
@@ -57,28 +66,6 @@ class Entity(object):
                     print (x)
                 raise
 
-    @staticmethod
-    # NOTE: This will return a list of all entities matching a type
-    def get_entity_by_type(driver, type_string): 
-        with driver.session() as session:
-            return_list = []
-            try:
-                #TODO: I can use the OR operator to match on either uuid or doi:
-                #MATCH (e) WHERE e.label= 'test dataset create file10' OR e.label= 'test dataset create file7' RETURN e
-                stmt = "MATCH (a) WHERE a.{type_attrib}= $type_string RETURN properties(a) as properties".format(type_attrib=HubmapConst.TYPE_ATTRIBUTE)
-
-                for record in session.run(stmt, type_string=type_string):
-                    dataset_record = record['properties']
-                    return_list.append(dataset_record)
-                return return_list                   
-            except CypherError as cse:
-                print ('A Cypher error was encountered: '+ cse.message)
-                raise
-            except:
-                print ('A general error occurred: ')
-                for x in sys.exc_info():
-                    print (x)
-                raise
 
     @staticmethod
     # NOTE: This will return a list of all entities matching a type
@@ -310,24 +297,28 @@ class Entity(object):
                         # ensure proper case
                         type_code = 'Donor'
                         type_attrib = HubmapConst.ENTITY_TYPE_ATTRIBUTE
-                        matching_stmt = "MATCH (a {{{type_attrib}: '{type_code}'}})-[:{rel_code}]->(m)".format(
+                        matching_stmt = "MATCH (entity {{{type_attrib}: '{type_code}'}})".format(
                             type_attrib=type_attrib, type_code=type_code, 
                             rel_code=HubmapConst.HAS_METADATA_REL)
+                        where_clause = " WHERE entity.{entitytype_attr} IS NOT NULL ".format(entitytype_attr=HubmapConst.ENTITY_TYPE_ATTRIBUTE)
                     else:
                         type_attrib = HubmapConst.SPECIMEN_TYPE_ATTRIBUTE                        
-                        matching_stmt = "MATCH (a)-[:{rel_code}]->(m {{ {type_attrib}: '{type_code}' }})".format(
+                        matching_stmt = "MATCH (entity)-[:{rel_code}]->(m {{ {type_attrib}: '{type_code}' }})".format(
                             type_attrib=type_attrib, type_code=type_code, rel_code=HubmapConst.HAS_METADATA_REL)
+                        where_clause = " WHERE entity.{entitytype_attr} IS NOT NULL ".format(entitytype_attr=HubmapConst.ENTITY_TYPE_ATTRIBUTE)
                         
                 else:
-                    matching_stmt = "MATCH (a)-[:{rel_code}]->(m)".format(
-                        rel_code=HubmapConst.HAS_METADATA_REL)
-                    
-                stmt = matching_stmt + " WHERE a.{entitytype_attr} IS NOT NULL RETURN a.{uuid_attr} AS entity_uuid, a.{hubmapid_attr} AS hubmap_identifier, a.{entitytype_attr} AS datatype, a.{doi_attr} AS entity_doi, a.{display_doi_attr} as entity_display_doi, properties(m) AS metadata_properties ORDER BY m.{provenance_timestamp} DESC".format(
+                    matching_stmt = "MATCH (entity:Entity) "
+                    where_clause = " WHERE entity.{entitytype_attr} IS NOT NULL AND entity.{entitytype_attr} <> 'Lab'".format(entitytype_attr=HubmapConst.ENTITY_TYPE_ATTRIBUTE)
+                order_clause = " ORDER BY entity_metadata_properties.{provenance_timestamp} DESC ".format(provenance_timestamp=HubmapConst.PROVENANCE_MODIFIED_TIMESTAMP_ATTRIBUTE)
+                """stmt = matching_stmt + " WHERE a.{entitytype_attr} IS NOT NULL RETURN a.{uuid_attr} AS entity_uuid, a.{hubmapid_attr} AS hubmap_identifier, a.{entitytype_attr} AS datatype, a.{doi_attr} AS entity_doi, a.{display_doi_attr} as entity_display_doi, properties(m) AS metadata_properties ORDER BY m.{provenance_timestamp} DESC".format(
                     uuid_attr=HubmapConst.UUID_ATTRIBUTE, entitytype_attr=HubmapConst.ENTITY_TYPE_ATTRIBUTE, hubmapid_attr=HubmapConst.LAB_IDENTIFIER_ATTRIBUTE,
                     activitytype_attr=HubmapConst.ACTIVITY_TYPE_ATTRIBUTE, doi_attr=HubmapConst.DOI_ATTRIBUTE, 
-                    display_doi_attr=HubmapConst.DISPLAY_DOI_ATTRIBUTE, provenance_timestamp=HubmapConst.PROVENANCE_MODIFIED_TIMESTAMP_ATTRIBUTE)
+                    display_doi_attr=HubmapConst.DISPLAY_DOI_ATTRIBUTE, provenance_timestamp=HubmapConst.PROVENANCE_MODIFIED_TIMESTAMP_ATTRIBUTE)"""
+                stmt = Entity.get_generic_entity_stmt(matching_stmt, where_clause, "", order_clause)
 
                 print("Here is the query: " + stmt)
+                
                 readonly_group_list = self.get_readonly_user_groups(token)
                 writeable_group_list = self.get_writeable_user_groups(token)
                 readonly_uuid_list = []
@@ -337,22 +328,24 @@ class Entity(object):
                     readonly_uuid_list.append(readonly_group_data['uuid'])
                 for writeable_group_data in writeable_group_list:
                     writeable_uuid_list.append(writeable_group_data['uuid'])
-
+                
+                return_dict = {}
                 for record in session.run(stmt):
                     data_record = {}
-                    data_record['uuid'] = record['entity_uuid']
-                    data_record['entity_display_doi'] = record['entity_display_doi']
-                    data_record['entity_doi'] = record['entity_doi']
+                    data_record['uuid'] = record['uuid']
+                    data_record['entity_display_doi'] = record['display_doi']
+                    data_record['entity_doi'] = record['doi']
                     data_record['datatype'] = record['datatype']
-                    data_record['properties'] = record['metadata_properties']
+                    data_record['properties'] = record['entity_metadata_properties']
                     data_record['hubmap_identifier'] = record['hubmap_identifier']
                     # determine if the record is writable by the current user
                     data_record['writeable'] = False
-                    if 'provenance_group_uuid' in record['metadata_properties']:
-                        if record['metadata_properties']['provenance_group_uuid'] in writeable_uuid_list:
-                            data_record['writeable'] = True
-                    return_list.append(data_record)
-                return return_list                    
+                    if record['entity_metadata_properties'] != None:
+                        if 'provenance_group_uuid' in record['entity_metadata_properties']:
+                            if record['entity_metadata_properties']['provenance_group_uuid'] in writeable_uuid_list:
+                                data_record['writeable'] = True
+                    return_dict[data_record['uuid']] = data_record
+                return list(return_dict.values())                    
             except CypherError as cse:
                 print ('A Cypher error was encountered: '+ cse.message)
                 raise
@@ -415,12 +408,15 @@ class Entity(object):
             type_code = getTypeCode(type_code)
 
             try:
-                stmt = "MATCH (a {{{type_attrib}: '{type_code}'}}) RETURN a.{uuid_attrib} as uuid".format(
-                    type_attrib=type_attrib, type_code=type_code, uuid_attrib=HubmapConst.UUID_ATTRIBUTE)
+                match_clause = "MATCH (entity {{{type_attrib}: '{type_code}'}}) ".format(type_attrib=type_attrib, type_code=type_code)
+                stmt = Entity.get_generic_entity_stmt(match_clause)
 
+                # build a unique list of uuids
+                return_dict = {}
                 for record in session.run(stmt):
-                    dataset_record = record['uuid']
-                    return_list.append(dataset_record)
+                    current_uuid = record['uuid']
+                    return_dict[current_uuid] = current_uuid
+                return_list = list(return_dict.keys())
                 return return_list                    
             except CypherError as cse:
                 print ('A Cypher error was encountered: '+ cse.message)
@@ -443,15 +439,22 @@ class Entity(object):
             type_codes_str = "[" + ','.join([f"'{getTypeCode(t)}'" for t in types]) + "]"
 
             try:     
-                stmt = f'MATCH (e:Entity), (e)-[r1:HAS_METADATA]->(m) WHERE e.entitytype IN {type_codes_str} RETURN e, m'
+                #match_clause = "MATCH (entity {{{type_attrib}: '{type_code}'}}) ".format(type_attrib=type_attrib, type_code=type_code)
+                #stmt = Entity.get_generic_entity_stmt(match_clause)
+                #stmt = f'MATCH (e:Entity), (e)-[r1:HAS_METADATA]->(m) WHERE e.entitytype IN {type_codes_str} RETURN e, m'
 
+                match_clause = "MATCH (entity) "
+                where_clause = " WHERE entity.entitytype IN {type_codes_str} ".format(type_codes_str=type_codes_str)
+                stmt = Entity.get_generic_entity_stmt(match_clause, where_clause)
+                entity_dict = {}
                 for record in session.run(stmt):
                     entity = {}
-                    entity.update(record.get('e')._properties)
-                    entity['metadata'] = record.get('m')._properties
-                    entities.append(entity)
+                    entity.update(record.get('entity_properties'))
+                    entity['metadata'] = record.get('entity_metadata_properties')
+                    uuid = record.get('uuid')
+                    entity_dict[uuid] = entity
 
-                return entities
+                return list(entity_dict.values())
             except CypherError as cse:
                 print ('A Cypher error was encountered: '+ cse.message)
                 raise
@@ -461,27 +464,6 @@ class Entity(object):
                     print (x)
                 raise
 
-    @staticmethod
-    def get_entities_by_metadata_attribute(driver, attribute_name, attribute_code): 
-        with driver.session() as session:
-            return_list = []
-
-            try:
-                stmt = "MATCH (e:Entity)-[:HAS_METADATA]-(m) WHERE m.{attribute_name} = '{attribute_code}' RETURN e.{uuid_attrib} as uuid".format(
-                    attribute_name=attribute_name, attribute_code=attribute_code, uuid_attrib=HubmapConst.UUID_ATTRIBUTE)
-
-                for record in session.run(stmt):
-                    dataset_record = record['uuid']
-                    return_list.append(dataset_record)
-                return return_list                    
-            except CypherError as cse:
-                print ('A Cypher error was encountered: '+ cse.message)
-                raise
-            except:
-                print ('A general error occurred: ')
-                for x in sys.exc_info():
-                    print (x)
-                raise
 
     @staticmethod
     def get_entity_count_by_type(driver, type_code): 
@@ -514,6 +496,7 @@ class Entity(object):
             left_dir = '<'
         elif str(direction).lower() == 'right':
             right_dir = '>'
+        
         stmt = "MATCH (e){left_dir}-[:{relationship_label}]-{right_dir}(a) WHERE e.{uuid_attrib}= '{identifier}' RETURN CASE WHEN e.{entitytype} is not null THEN e.{entitytype} WHEN e.{activitytype} is not null THEN e.{activitytype} ELSE e.{agenttype} END AS datatype, e.{uuid_attrib} AS uuid, e.{doi_attrib} AS doi, e.{doi_display_attrib} AS display_doi, e.{hubmap_identifier_attrib} AS hubmap_identifier, properties(a) AS properties".format(
             identifier=identifier,uuid_attrib=HubmapConst.UUID_ATTRIBUTE, doi_attrib=HubmapConst.DOI_ATTRIBUTE, doi_display_attrib=HubmapConst.DISPLAY_DOI_ATTRIBUTE,
                 entitytype=HubmapConst.ENTITY_TYPE_ATTRIBUTE, activitytype=HubmapConst.ACTIVITY_TYPE_ATTRIBUTE, agenttype=HubmapConst.AGENT_TYPE_ATTRIBUTE,
@@ -548,24 +531,18 @@ class Entity(object):
         plus any connected metadata (entity_metadata_properties).  These records will repeat for each child returned.  For each
         child, the query returns: child_entity_properties, child_metadata_properties.          
         """
-        
-        stmt = """MATCH (entity)<-[:{relationship_label}]-(child_entity)
-        OPTIONAL MATCH (child_entity)-[:{has_metadata_attr}]->(child_metadata)
-        OPTIONAL MATCH (entity)-[:{has_metadata_attr}]->(entity_metadata)  
-        WHERE entity.{uuid_attrib}= '{identifier}' 
-        RETURN CASE WHEN entity.{entitytype} is not null THEN entity.{entitytype} 
-        WHEN entity.{activitytype} is not null THEN entity.{activitytype} ELSE entity.{agenttype} END AS datatype, 
-        entity.{uuid_attrib} AS uuid, entity.{doi_attrib} AS doi, entity.{doi_display_attrib} AS display_doi, 
-        entity.{hubmap_identifier_attrib} AS hubmap_identifier, properties(entity_metadata) AS entity_metadata_properties,
-        properties(child_entity) AS child_entity_properties, properties(child_metadata) AS child_metadata_properties
-        ORDER BY entity.{uuid_attrib}""".format(
-            identifier=identifier,uuid_attrib=HubmapConst.UUID_ATTRIBUTE, doi_attrib=HubmapConst.DOI_ATTRIBUTE, doi_display_attrib=HubmapConst.DISPLAY_DOI_ATTRIBUTE,
-                entitytype=HubmapConst.ENTITY_TYPE_ATTRIBUTE, activitytype=HubmapConst.ACTIVITY_TYPE_ATTRIBUTE, agenttype=HubmapConst.AGENT_TYPE_ATTRIBUTE,
-                hubmap_identifier_attrib=HubmapConst.LAB_IDENTIFIER_ATTRIBUTE,has_metadata_attr=HubmapConst.HAS_METADATA_REL,
-                relationship_label=relationship_label)
+                
+        match_clause = """MATCH (entity)<-[:{relationship_label}]-(child_entity)
+        WHERE entity.{uuid_attrib}= '{identifier}'
+        OPTIONAL MATCH (child_entity)-[:{has_metadata_attr}]->(child_metadata)""".format(relationship_label=relationship_label,
+                                                                                         uuid_attrib=HubmapConst.UUID_ATTRIBUTE, identifier=identifier, 
+                                                                                         has_metadata_attr=HubmapConst.HAS_METADATA_REL)
+        additional_return_clause = ", properties(child_entity) AS child_entity_properties, properties(child_metadata) AS child_metadata_properties "                                                                            
+        order_by_clause = " ORDER BY entity.{uuid_attrib} ".format(uuid_attrib=HubmapConst.UUID_ATTRIBUTE)
+        stmt = Entity.get_generic_entity_stmt(match_clause, "", additional_return_clause, order_by_clause)
         
         with driver.session() as session:
-            child_list = []
+            child_dict = {}
             return_object = {}
             try:
                 for record in session.run(stmt):
@@ -606,8 +583,8 @@ class Entity(object):
                                         new_metadata_dict[key] = ast.literal_eval(record['child_metadata_properties'][key])
                             child_object['properties'] = new_metadata_dict
                         # only add the child object if it has child_enity_properties
-                        child_list.append(child_object)
-                return_object['items'] = child_list
+                        child_dict[child_object['uuid']] = child_object
+                return_object['items'] = list(child_dict.values())
                 return return_object                   
             except CypherError as cse:
                 print ('A Cypher error was encountered: '+ cse.message)
@@ -786,18 +763,15 @@ class Entity(object):
             ancestor_ids = []
             ancestors = []
             try:
-                stmt = f'''MATCH (e:Entity {{ {HubmapConst.UUID_ATTRIBUTE}: '{uuid}' }})<-[ACTIVITY_OUTPUT]-(e1)<-[r:ACTIVITY_INPUT|:ACTIVITY_OUTPUT*]-(a:Entity), 
-                (e)-[r1:HAS_METADATA]->(m), (a)-[r2:HAS_METADATA]->(am) 
-                RETURN e, m, a, am'''
+                matching_stmt = """MATCH (entity {{ {uuid_attr}: '{uuid}' }})<-[:ACTIVITY_OUTPUT]-(e1)<-[r:ACTIVITY_INPUT|:ACTIVITY_OUTPUT*]-(all_ancestors:Entity)-[:{metadata_rel}]->(all_ancestors_metadata) 
+                """.format(uuid=uuid, uuid_attr=HubmapConst.UUID_ATTRIBUTE, metadata_rel=HubmapConst.HAS_METADATA_REL )
+                additional_return_clause = ", apoc.coll.toSet(COLLECT(all_ancestors { .*, metadata: properties(all_ancestors_metadata) } )) AS all_ancestors "
+                stmt = Entity.get_generic_entity_stmt(matching_stmt,"",additional_return_clause)
 
+                print ("Here is the statement: " + stmt)
                 for record in session.run(stmt, uuid=uuid):
-                    ancestor_ids.append(record.get('a')['uuid'])
-                    ancestor = {}
-                    ancestor.update(record.get('a')._properties)
-                    ancestor['metadata'] = record.get('am')._properties
-
-                    ancestors.append(ancestor)
-
+                    if record.get('all_ancestors', None) != None:
+                        ancestors = record['all_ancestors']
                 return ancestors               
             except CypherError as cse:
                 print ('A Cypher error was encountered: '+ cse.message)
@@ -812,21 +786,17 @@ class Entity(object):
         Get all descendants by uuid
         '''
         with driver.session() as session:
-            descendant_ids = []
             descendants = []
             try:
-                stmt = f'''MATCH (e:Entity {{ {HubmapConst.UUID_ATTRIBUTE}: '{uuid}' }})-[:ACTIVITY_INPUT]->(a:Activity)-[r:ACTIVITY_INPUT|:ACTIVITY_OUTPUT*]->(d:Entity),
-                         (e)-[r1:HAS_METADATA]->(m), (d)-[r2:HAS_METADATA]->(dm) 
-                        RETURN DISTINCT e, m, d, dm'''
+                matching_stmt = """MATCH (entity {{ {uuid_attr}: '{uuid}' }})-[:ACTIVITY_INPUT]-(a:Activity)-[r:ACTIVITY_INPUT|:ACTIVITY_OUTPUT*]->(all_descendants:Entity)-[:{metadata_rel}]->(all_descendants_metadata) 
+                """.format(uuid=uuid, uuid_attr=HubmapConst.UUID_ATTRIBUTE, metadata_rel=HubmapConst.HAS_METADATA_REL )
+                additional_return_clause = ", apoc.coll.toSet(COLLECT(all_descendants { .*, metadata: properties(all_descendants_metadata) } )) AS all_descendants "
+                stmt = Entity.get_generic_entity_stmt(matching_stmt,"",additional_return_clause)
 
+                print ("Here is the statement: " + stmt)
                 for record in session.run(stmt, uuid=uuid):
-                    descendant_ids.append(record.get('d')['uuid'])
-                    descendant = {}
-                    descendant.update(record.get('d')._properties)
-                    descendant['metadata'] = record.get('dm')._properties
-
-                    descendants.append(descendant)
-                
+                    if record.get('all_descendants', None) != None:
+                        descendants = record['all_descendants']
                 return descendants               
             except CypherError as cse:
                 print ('A Cypher error was encountered: '+ cse.message)
@@ -843,16 +813,12 @@ class Entity(object):
         with driver.session() as session:
             parents = []
             try:
-                stmt = f'''MATCH (e:Entity {{ {HubmapConst.UUID_ATTRIBUTE}: '{uuid}' }})<-[ACTIVITY_OUTPUT]-(e1)
-                <-[r:ACTIVITY_INPUT|:ACTIVITY_OUTPUT]-(a:Entity), (e)-[r1:HAS_METADATA]->(m), (a)-[r2:HAS_METADATA]->(am) 
-                RETURN e, m, a, am'''
+                match_clause = "MATCH (entity {{ {uuid_attrib}: '{uuid}' }}) ".format(uuid_attrib=HubmapConst.UUID_ATTRIBUTE,uuid=uuid)
+                stmt = Entity.get_generic_entity_stmt(match_clause, "")
 
                 for record in session.run(stmt, uuid=uuid):
-                    parent = {}
-                    parent.update(record.get('a')._properties)
-                    parent['metadata'] = record.get('am')._properties
-
-                    parents.append(parent)
+                    if record.get('immediate_ancestors', None) != None:
+                        parents = record['immediate_ancestors']
                 
                 return parents               
             except CypherError as cse:
@@ -870,17 +836,13 @@ class Entity(object):
         with driver.session() as session:
             children = []
             try:
-                stmt = f'''MATCH (e:Entity {{ {HubmapConst.UUID_ATTRIBUTE}: '{uuid}' }})-[:ACTIVITY_INPUT]->
-                        (a:Activity)-[r:ACTIVITY_INPUT|:ACTIVITY_OUTPUT]->(d:Entity), (e)-[r1:HAS_METADATA]->(m), (d)-[r2:HAS_METADATA]->(dm) 
-                        RETURN DISTINCT e, m, d, dm'''
+                match_clause = "MATCH (entity {{ {uuid_attrib}: '{uuid}' }}) ".format(uuid_attrib=HubmapConst.UUID_ATTRIBUTE,uuid=uuid)
+                stmt = Entity.get_generic_entity_stmt(match_clause, "")
 
                 for record in session.run(stmt, uuid=uuid):
-                    child = {}
-                    child.update(record.get('d')._properties)
-                    child['metadata'] = record.get('dm')._properties
+                    if record.get('immediate_descendants', None) != None:
+                        children = record['immediate_descendants']
 
-                    children.append(child)
-                
                 return children               
             except CypherError as cse:
                 print ('A Cypher error was encountered: '+ cse.message)
@@ -888,7 +850,36 @@ class Entity(object):
             except BaseException as be:
                 pprint(be)
                 raise be
+    
+    @staticmethod
+    def get_generic_entity_stmt(match_clause="", where_clause="", additional_return_clause ="",order_clause=""):
 
+        # these OPTIONAL MATCH statements connect the entity to its immediate ancestors and descendants        
+        default_optional_match_clause = """ OPTIONAL MATCH (entity)-[:HAS_METADATA]->(entity_metadata)
+        OPTIONAL MATCH (anc_meta)<-[:{metadata_rel}]-(ancestor)-[r2]->(ancestor_act)-[r1]->(entity)
+        OPTIONAL MATCH (entity)-[r3]->(descendant_act)-[r4]->(descendant)-[:{metadata_rel}]->(desc_meta) """.format(
+            metadata_rel=HubmapConst.HAS_METADATA_REL)
+
+        
+        """This RETURN clause returns a set of entity data, all of the entity node properties (as entity_properties),
+        the all the properties of the metadata node (as entity_metadata_properties), and the entity node's immediate ancestors and descendants.
+        The ancestors and descendents are collated into a unique object array using the COLLECT statement
+        followed by the apoc.coll.toSet function.  The apoc.coll.toSet takes an array of items and returns the
+        unique set.  This is necessary because the COLLECT statement will make items repeat.
+        """
+        default_return_clause = """ RETURN CASE WHEN entity.{entitytype} is not null THEN entity.{entitytype} 
+        WHEN entity.{activitytype} is not null THEN entity.{activitytype} ELSE entity.{agenttype} END AS datatype, 
+        entity.{uuid_attrib} AS uuid, entity.{doi_attrib} AS doi, entity.{doi_display_attrib} AS display_doi, 
+        entity.{hubmap_identifier_attrib} AS hubmap_identifier, properties(entity) AS entity_properties, properties(entity_metadata) AS entity_metadata_properties,
+        apoc.coll.toSet(COLLECT(descendant {{ .*, metadata: properties(desc_meta) }} )) AS immediate_descendants,
+        apoc.coll.toSet(COLLECT(ancestor {{ .*, metadata: properties(anc_meta) }} )) AS immediate_ancestors """.format(
+            uuid_attrib=HubmapConst.UUID_ATTRIBUTE, doi_attrib=HubmapConst.DOI_ATTRIBUTE, doi_display_attrib=HubmapConst.DISPLAY_DOI_ATTRIBUTE,
+                entitytype=HubmapConst.ENTITY_TYPE_ATTRIBUTE, activitytype=HubmapConst.ACTIVITY_TYPE_ATTRIBUTE, agenttype=HubmapConst.AGENT_TYPE_ATTRIBUTE,
+                hubmap_identifier_attrib=HubmapConst.LAB_IDENTIFIER_ATTRIBUTE)
+        
+        stmt = match_clause + where_clause + default_optional_match_clause + default_return_clause + additional_return_clause + order_clause
+        return stmt
+    
 def getTypeCode(type_code):
     typeCodeDict = {str(HubmapConst.DATASET_TYPE_CODE).lower() : HubmapConst.DATASET_TYPE_CODE,
                     str(HubmapConst.DATASTAGE_TYPE_CODE).lower() : HubmapConst.DATASTAGE_TYPE_CODE,
@@ -913,6 +904,69 @@ if __name__ == "__main__":
     entity = Entity(confdata['APP_CLIENT_ID'],confdata['APP_CLIENT_SECRET'],confdata['UUID_WEBSERVICE_URL'])
     conn = Neo4jConnection(confdata['NEO4J_SERVER'], confdata['NEO4J_USERNAME'], confdata['NEO4J_PASSWORD'])
     driver = conn.get_driver()
+    
+    new_ent = Entity.get_entity(driver, '13ceb39891c4d06fc8fb5dbb5b0c16a0')
+    print(new_ent)
+    
+    sample_uuid_list = Entity.get_entities_by_type(driver, 'Sample')
+    print(sample_uuid_list)
+
+    dataset_uuid_list = Entity.get_entities_by_type(driver, 'Dataset')
+    print(dataset_uuid_list)
+    
+    type_list = ["Donor"]
+    type_return_list = Entity.get_entities_by_types(driver, type_list)
+    pprint.pprint(type_return_list)
+    
+    """
+    token = "AgV70V9a22mgr9N09WMmOW4b8eEzobyzmy1znPd6Jawme0VOzGTbCa999zM8bnb6x1OkEnEW14XGlYtlKxzPvu9k8G"
+    type_code = "organ"
+    editable_list = entity.get_editable_entities_by_type(driver, token, type_code)
+    print("Editable list with type = " + type_code)
+    print("Count: " + str(len(editable_list)))
+
+    type_code = "ffpe_block"
+    editable_list = entity.get_editable_entities_by_type(driver, token, type_code)
+    print("Editable list with type = " + type_code)
+    print("Count: " + str(len(editable_list)))
+
+    editable_list = entity.get_editable_entities_by_type(driver, token)
+    print("Editable list with type = None")
+    print("Count: " + str(len(editable_list)))
+    """
+    
+    collection_uuid = "cc82c72adc8bb032b5044725107d2c7a"
+    collection_list = Entity.get_entities_and_children_by_relationship(driver, collection_uuid, HubmapConst.IN_COLLECTION_REL)
+    print("Collections")
+    print(collection_list)
+        
+    anc_dec_uuid = "13ceb39891c4d06fc8fb5dbb5b0c16a0"
+    ancestor_list = Entity.get_ancestors(driver, anc_dec_uuid)
+    print("Ancestors")
+    print(ancestor_list)
+    print("count: " + str(len(ancestor_list)))
+
+    descendant_list = Entity.get_descendants(driver, anc_dec_uuid)
+    print("Descendants")
+    print(descendant_list)
+    print("count: " + str(len(descendant_list)))
+
+    parent_list = Entity.get_parents(driver, anc_dec_uuid)
+    print("Parents")
+    print(parent_list)
+    print("count: " + str(len(parent_list)))
+
+    children_list = Entity.get_children(driver, anc_dec_uuid)
+    print("Children")
+    print(children_list)
+    print("count: " + str(len(children_list)))
+
+    """
+    descendant_list = Entity.get_descendants(driver, anc_dec_uuid)
+    print("Descendants")
+    print(descendant_list)
+    """
+    
     """group_info = entity.get_group_by_name('HuBMAP-UFlorida')
     print(group_info)
     group_info = entity.get_group_by_name('University of Florida TMC')
@@ -934,8 +988,8 @@ if __name__ == "__main__":
     entities_list = entity.get_entities_by_metadata_attribute(driver, HubmapConst.SPECIMEN_TYPE_ATTRIBUTE, 'ffpe_block')
     print(entities_list) 
     """
-    entities_list = entity.get_entities_and_children_by_relationship(driver, 'cc82c72adc8bb032b5044725107d2c7a', HubmapConst.IN_COLLECTION_REL) 
-    print(entities_list) 
+    #entities_list = entity.get_entities_and_children_by_relationship(driver, 'cc82c72adc8bb032b5044725107d2c7a', HubmapConst.IN_COLLECTION_REL) 
+    #print(entities_list) 
    
     
     """token = "AggQN13V56BW10NMY9e18vPen0rEEeDW5aorWD39gBx1j48pwycJC31pG8WXdvYdevkD8vGJa210qxc1ke58WSBgD6"
