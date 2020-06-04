@@ -15,7 +15,7 @@ import pprint
 from flask import Response
 from hubmap_commons.autherror import AuthError
 import ast
-import appconfig
+#import appconfig
 
 class Entity(object):
     '''
