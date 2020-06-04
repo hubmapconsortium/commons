@@ -40,6 +40,9 @@ def listToDelimited(lst, delimitChar = ", ", quoteChar = None, trimAndUpperCase 
             delimiter = delimitChar
     return(rVal)
 
+def listToTabSeparated(lst, quoteChar = None, trimAndUpperCase = False):
+    return(listToDelimited(lst, '\t', quoteChar, trimAndUpperCase))
+
 def listToCommaSeparated(lst, quoteChar = None, trimAndUpperCase = False):
     return(listToDelimited(lst, ", ", quoteChar, trimAndUpperCase))
 

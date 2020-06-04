@@ -96,7 +96,15 @@ class HubmapConst(object):
     SOURCE_UUID_ATTRIBUTE = 'source_uuid'
     SOURCE_DISPLAY_ID_ATTRIBUTE = 'source_display_id'
     RUI_LOCATION_ATTRIBUTE = 'rui_location'
-    
+    DONOR_OPEN_CONSENT = 'open_consent'
+    DATASET_CONTAINS_GENOMIC_DATA = 'contains_genomic_data'
+    DATASET_DATA_ACCESS_LEVEL = 'data_access_level'
+    DATASET_ACCESS_LEVEL_CONSORTIUM = 'consortium'
+    DATASET_ACCESS_LEVEL_PUBLIC = 'public'
+    DATASET_ACCESS_LEVEL_PROTECTED = 'protected'
+    DATASET_ACCESS_LEVEL_OPTIONS = [DATASET_ACCESS_LEVEL_CONSORTIUM, DATASET_ACCESS_LEVEL_PUBLIC,
+                                    DATASET_ACCESS_LEVEL_PROTECTED]
+                                     
     
     #Organ Specifiers
     BLADDER_ORGAN_SPECIFIER = 'BL'

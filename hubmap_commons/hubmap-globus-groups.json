@@ -10,6 +10,16 @@
     "generateuuid": false
   },
   {
+    "description": "Users who can submit HuBMAP datasets",
+    "has_subgroups": false,
+    "identity_set_properties": null,
+    "uuid": "89a69625-99d7-11ea-9366-0e98982705c1",
+    "group_type": "regular",
+    "name": "HuBMAP-Data-Admin",
+    "displayname": "HuBMAP-data-admin",
+    "generateuuid": false
+  },
+  {
     "description": "Users who have write access in the University of Florida directory",
     "has_subgroups": false,
     "identity_set_properties": null,

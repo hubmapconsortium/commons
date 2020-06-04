@@ -125,6 +125,56 @@ def mkDir(path):
     else:  
         return True
 
+def linkDir(src_path, dest_path):
+
+    dest_root_path = os.path.split(dest_path)[0]
+    #if the directory where we need to create the link doesn't exist..
+    if not os.path.exists(dest_root_path) or not os.path.isdir(dest_root_path):
+        raise Exception("ERROR linking, destination does not exist or is not a directory: " + dest_root_path)
+    
+    #if we don't have write access in the directory where the link needs to be created..
+    if not os.access(dest_root_path, os.W_OK) or not os.access(dest_root_path, os.X_OK):
+        raise Exception("ERROR linking, not write access in destination directory: " + dest_root_path)
+
+    #the src doesn't exist or isn't a directory
+    if not os.path.exists(src_path) or not os.path.isdir(src_path):
+        raise Exception("ERROR linking, source dir does not exist or is not a directory: " + src_path)
+
+    
+    #if that link already exists find out why..
+    if os.path.exists(dest_path):
+        #already a link
+        if os.path.islink(dest_path):
+            #src is already linked to the 
+            if ensureTrailingSlash(os.path.realpath(dest_path)) == ensureTrailingSlash(src_path):
+                return
+            #already linked to a different place, remove and replace
+            else:
+                os.unlink(dest_path)
+        else:
+            raise Exception("Error linking, destination directory exists: " + dest_path)
+
+    os.symlink(src_path, dest_path)
+
+def unlinkDir(linked_path):
+
+    base_path = os.path.split(linked_path)[0]
+    if not os.path.exists(base_path):
+        raise Exception("Error unlinking, the base directory doesn't exist for: " + linked_path)
+    
+    if not os.access(base_path, os.W_OK) or not os.access(base_path, os.X_OK):
+        raise Exception("ERROR unlinking, no write access to base directory when trying to  unlink: " + linked_path)
+    
+    if not os.path.exists(linked_path) or not os.path.isdir(linked_path):
+        raise Exception("ERROR unlinking, the linked resource doesn't exist or isn't a directory: " + linked_path)
+    
+    if not os.path.islink(linked_path):
+        raise Exception("ERROR unlinking, the resource to unlink is not a symbolic link: " + linked_path)
+    
+        
+    os.unlink(linked_path)
+
+
 #parse a file and return the first line that
 #doesn't start with a #
 def getFirstNonComment(file):     
