@@ -83,13 +83,20 @@ class Provenance:
 
     def load_group_data(self):
         with open(AuthCache.groupJsonFilename) as jsFile:
-            groups = json.load(jsFile)
-            for group in groups:
+            self.groups = json.load(jsFile)
+            self.groups_by_tmc_prefix = {}
+            for group in self.groups:
                 if 'name' in group and 'uuid' in group and 'generateuuid' in group and 'displayname' in group and not string_helper.isBlank(group['name']) and not string_helper.isBlank(group['uuid']) and not string_helper.isBlank(group['displayname']):
                     group_obj = {'name' : group['name'].lower().strip(), 'uuid' : group['uuid'].lower().strip(),
                                  'displayname' : group['displayname'], 'generateuuid': group['generateuuid']}
                     if 'tmc_prefix' in group:
                         group_obj['tmc_prefix'] = group['tmc_prefix']
+                        if 'uuid' in group and 'displayname' in group and not string_helper.isBlank(group['uuid']) and not string_helper.isBlank(group['displayname']):
+                            group_info = {}
+                            group_info['uuid'] = group['uuid']
+                            group_info['displayname'] = group['displayname']
+                            group_info['tmc_prefix'] = group['tmc_prefix']
+                            self.groups_by_tmc_prefix[group['tmc_prefix'].upper().strip()] = group_info
                     self.groupsByName[group['name'].lower().strip()] = group_obj
                     self.groupsById[group['uuid']] = group_obj
 
@@ -458,7 +465,15 @@ class Provenance:
                 return_dict[self.organization_attribute_map[attribute_key]] = group_record[attribute_key]
         return_dict[PROV_TYPE] = 'prov:Organization'
         return return_dict
-        
+    
+    #get all group (tmc/component/Globus Groups/etc...) info as a dict directly from the
+    #hubmap-globus-groups.json file
+    def get_group_info(self):
+        return self.groups
+    
+    def get_groups_by_tmc_prefix(self):
+        return self.groups_by_tmc_prefix
+    
 if __name__ == "__main__":
     
        
