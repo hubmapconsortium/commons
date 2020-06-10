@@ -96,6 +96,14 @@ class HubmapConst(object):
     SOURCE_UUID_ATTRIBUTE = 'source_uuid'
     SOURCE_DISPLAY_ID_ATTRIBUTE = 'source_display_id'
     RUI_LOCATION_ATTRIBUTE = 'rui_location'
+    COLLECTION_DOI_REGISTERED_ATTRIBUTE = 'doi_registered'
+    COLLECTION_CREATORS_ATTRIBUTE = 'creators'
+    CREATOR_FULL_NAME_ATTRIBUTE = 'name'
+    CREATOR_FIRST_NAME_ATTRIBUTE = 'first_name'
+    CREATOR_LAST_NAME_ATTRIBUTE = 'last_name'
+    CREATOR_MIDDLE_INITIAL_ATTRIBUTE = 'middle_name_or_initial'
+    CREATOR_ORCID_ID_ATTRIBUTE = 'orcid_id'
+    CREATOR_AFFILIATION_ATTRIBUTE = 'affiliation'
     DONOR_OPEN_CONSENT = 'open_consent'
     DATASET_CONTAINS_GENOMIC_DATA = 'contains_genomic_data'
     DATASET_DATA_ACCESS_LEVEL = 'data_access_level'
@@ -104,7 +112,6 @@ class HubmapConst(object):
     DATASET_ACCESS_LEVEL_PROTECTED = 'protected'
     DATASET_ACCESS_LEVEL_OPTIONS = [DATASET_ACCESS_LEVEL_CONSORTIUM, DATASET_ACCESS_LEVEL_PUBLIC,
                                     DATASET_ACCESS_LEVEL_PROTECTED]
-                                     
     
     #Organ Specifiers
     BLADDER_ORGAN_SPECIFIER = 'BL'
@@ -151,7 +158,8 @@ class HubmapConst(object):
     DERIVED_ACTIVITY_TYPE_CODE = 'Derived Activity'
     CREATE_SAMPLE_ACTIVITY_TYPE_CODE = 'Create Sample Activity'
     REGISTER_DONOR_ACTIVITY_TYPE_CODE = 'Register Donor Activity'
-
+    
+    
     DATASET_REQUIRED_ATTRIBUTE_LIST = [{'attribute_name' : UUID_ATTRIBUTE, 'indexed' : 'True', 'required' : 'True'},
      {'attribute_name' : DOI_ATTRIBUTE, 'indexed' : 'True', 'required' : 'True'},
      {'attribute_name' : DISPLAY_DOI_ATTRIBUTE, 'indexed' : 'True', 'required' : 'True'},
