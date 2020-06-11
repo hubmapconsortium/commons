@@ -15,6 +15,8 @@ import pprint
 from flask import Response
 from hubmap_commons.autherror import AuthError
 import ast
+from hubmap_commons import string_helper
+import json
 #import appconfig
 
 class Entity(object):
@@ -537,7 +539,11 @@ class Entity(object):
         OPTIONAL MATCH (child_entity)-[:{has_metadata_attr}]->(child_metadata)""".format(relationship_label=relationship_label,
                                                                                          uuid_attrib=HubmapConst.UUID_ATTRIBUTE, identifier=identifier, 
                                                                                          has_metadata_attr=HubmapConst.HAS_METADATA_REL)
-        additional_return_clause = ", properties(child_entity) AS child_entity_properties, properties(child_metadata) AS child_metadata_properties "                                                                            
+        additional_return_clause = ", properties(child_entity) AS child_entity_properties, properties(child_metadata) AS child_metadata_properties "
+
+        #this is a collection, so get the extra Collection attributes 
+        #if relationship_label == HubmapConst.IN_COLLECTION_REL:
+        #    additional_return_clause = additional_return_clause + ", entity."
         order_by_clause = " ORDER BY entity.{uuid_attrib} ".format(uuid_attrib=HubmapConst.UUID_ATTRIBUTE)
         stmt = Entity.get_generic_entity_stmt(match_clause, "", additional_return_clause, order_by_clause)
         
@@ -554,6 +560,11 @@ class Entity(object):
                         return_object['display_doi'] = record['display_doi']
                         return_object['hubmap_identifier'] = record['hubmap_identifier']
                         return_object['properties'] = record['entity_metadata_properties']
+                        if 'doi_registered' in record['entity_properties']:
+                            return_object['doi_registered'] = record['entity_properties']['doi_registered']
+                        if 'creators' in record['entity_properties'] and not string_helper.isBlank(record['entity_properties']['creators']):
+                            creators_arry = json.loads(record['entity_properties']['creators'])
+                            return_object['creators'] = creators_arry
                         if record['entity_metadata_properties'] != None:
                             new_metadata_dict = {}
                             for key in record['entity_metadata_properties'].keys():
@@ -867,6 +878,7 @@ class Entity(object):
         followed by the apoc.coll.toSet function.  The apoc.coll.toSet takes an array of items and returns the
         unique set.  This is necessary because the COLLECT statement will make items repeat.
         """
+
         default_return_clause = """ RETURN CASE WHEN entity.{entitytype} is not null THEN entity.{entitytype} 
         WHEN entity.{activitytype} is not null THEN entity.{activitytype} ELSE entity.{agenttype} END AS datatype, 
         entity.{uuid_attrib} AS uuid, entity.{doi_attrib} AS doi, entity.{doi_display_attrib} AS display_doi, 
