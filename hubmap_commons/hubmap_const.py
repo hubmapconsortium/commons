@@ -106,6 +106,7 @@ class HubmapConst(object):
     CREATOR_AFFILIATION_ATTRIBUTE = 'affiliation'
     DONOR_OPEN_CONSENT = 'open_consent'
     DATASET_CONTAINS_GENOMIC_DATA = 'contains_genomic_data'
+    DATASET_IS_PROTECTED = 'is_protected'
     DATASET_DATA_ACCESS_LEVEL = 'data_access_level'
     DATASET_ACCESS_LEVEL_CONSORTIUM = 'consortium'
     DATASET_ACCESS_LEVEL_PUBLIC = 'public'
