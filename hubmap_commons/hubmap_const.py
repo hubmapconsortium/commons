@@ -111,7 +111,7 @@ class HubmapConst(object):
     ACCESS_LEVEL_CONSORTIUM = 'consortium'
     ACCESS_LEVEL_PUBLIC = 'public'
     ACCESS_LEVEL_PROTECTED = 'protected'
-    ACCESS_LEVEL_OPTIONS = [ACCESS_LEVEL_CONSORTIUM, ACCESS_LEVEL_PUBLIC,
+    DATA_ACCESS_LEVEL_OPTIONS = [ACCESS_LEVEL_CONSORTIUM, ACCESS_LEVEL_PUBLIC,
                                     ACCESS_LEVEL_PROTECTED]
     
     #Organ Specifiers
