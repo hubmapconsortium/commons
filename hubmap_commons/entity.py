@@ -17,6 +17,7 @@ from hubmap_commons.autherror import AuthError
 import ast
 from hubmap_commons import string_helper
 import json
+from builtins import staticmethod
 #import appconfig
 
 class Entity(object):
@@ -31,6 +32,21 @@ class Entity(object):
         self.entity_config['APP_CLIENT_SECRET'] = app_client_secret
         self.entity_config['UUID_WEBSERVICE_URL'] = uuid_webservice_url
 
+    @staticmethod
+    def get_uuid_list(uuid_webservice_url, token, identifier_list):
+        uuid_data = []
+        ug = UUID_Generator(uuid_webservice_url)
+        try:
+            for identifer in identifier_list:
+                hmuuid_data = ug.getUUID(token, identifer)
+                if len(hmuuid_data) != 1:
+                    raise ValueError("Could not find information for identifier " + identifer)
+                if 'hmuuid' not in hmuuid_data[0]:
+                    raise ValueError("Could not find information for identifier " + identifer)
+                uuid_data.append(hmuuid_data[0]['hmuuid'])
+        except:
+            raise ValueError('Unable to resolve UUID for: ' + identifer)
+        return uuid_data
     
     @staticmethod
     # NOTE: This will return a single entity, activity, or agent
@@ -912,6 +928,25 @@ def getTypeCode(type_code):
 
 if __name__ == "__main__":
     #app_client_id, app_client_secret, uuid_webservice_url
+    webservice_url = 'http://localhost:5001/hmuuid'
+    token = 'AgqmNezWyzbWp798lav9pe0yXnDdl11757kd7aopwDn0Me6rx2hqCMpwD41dbOE7vPJ9V646GeK0JViPkJMrbcky6Q'
+    
+    identifier_list = ['HBM252.GWGP.442','HBM685.VGCM.923','HBM524.SHKC.684','HBM989.NCVW.829','HBM226.KTZR.937','HBM434.HPXW.499']
+    uuid_list = Entity.get_uuid_list(webservice_url, token, identifier_list)
+    print('Given: ' + str(identifier_list))
+    print('Returned: '+ str(uuid_list))
+
+    identifier_list = ['TEST0060-LB-2-1','TEST0061','TEST0060-LB-1','TEST0060-LB']
+    uuid_list = Entity.get_uuid_list(webservice_url, token, identifier_list)
+    print('Given: ' + str(identifier_list))
+    print('Returned: '+ str(uuid_list))
+    
+    identifier_list = ['b9e44b95fcf8550a3978d7d8e19df6b5', 'd4a9d88b24f460f30a50475b63d66cd5', '8c8d0d4e07c9b5cf9173f5519aca7dd3','HBM252.GWGP.442','HBM685.VGCM.923','HBM524.SHKC.684','TEST0060-LB-2-1','TEST0061','TEST0060-LB-1','TEST0060-LB']
+    uuid_list = Entity.get_uuid_list(webservice_url, token, identifier_list)
+    print('Given: ' + str(identifier_list))
+    print('Returned: '+ str(uuid_list))
+          
+    """
     confdata = appconfig.__dict__
     entity = Entity(confdata['APP_CLIENT_ID'],confdata['APP_CLIENT_SECRET'],confdata['UUID_WEBSERVICE_URL'])
     conn = Neo4jConnection(confdata['NEO4J_SERVER'], confdata['NEO4J_USERNAME'], confdata['NEO4J_PASSWORD'])
@@ -929,6 +964,7 @@ if __name__ == "__main__":
     type_list = ["Donor"]
     type_return_list = Entity.get_entities_by_types(driver, type_list)
     pprint.pprint(type_return_list)
+    """
     
     """
     token = "AgV70V9a22mgr9N09WMmOW4b8eEzobyzmy1znPd6Jawme0VOzGTbCa999zM8bnb6x1OkEnEW14XGlYtlKxzPvu9k8G"
@@ -947,6 +983,7 @@ if __name__ == "__main__":
     print("Count: " + str(len(editable_list)))
     """
     
+    """
     collection_uuid = "cc82c72adc8bb032b5044725107d2c7a"
     collection_list = Entity.get_entities_and_children_by_relationship(driver, collection_uuid, HubmapConst.IN_COLLECTION_REL)
     print("Collections")
@@ -972,6 +1009,9 @@ if __name__ == "__main__":
     print("Children")
     print(children_list)
     print("count: " + str(len(children_list)))
+    """
+    
+
 
     """
     descendant_list = Entity.get_descendants(driver, anc_dec_uuid)
