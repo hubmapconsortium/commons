@@ -471,6 +471,9 @@ class Provenance:
     def get_group_info(self):
         return self.groups
     
+    def get_group_info_by_id(self):
+        return self.groupsById
+    
     def get_groups_by_tmc_prefix(self):
         return self.groups_by_tmc_prefix
     

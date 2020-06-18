@@ -10,6 +10,8 @@ import json
 import os
 import re
 from hubmap_commons import file_helper
+from hubmap_commons import hubmap_const
+from hubmap_commons import exceptions
 
 TOKEN_EXPIRATION = 900 #15 minutes
 GLOBUS_GROUP_SCOPE = 'urn:globus:auth:scope:nexus.api.globus.org:groups'
@@ -242,7 +244,55 @@ class AuthHelper:
             
 
 
+    #get the highest level access level given the token embedded in the HTTP request
+    #if a valid token is found in the HTTP request the full user_info dictionary is returned with "data_access_level" attribute added
+    #if public access and no token just {"data_access_level":"level"} dictionary is returned
+    #returns "data_access_level : public" (HubmapConst.ACCESS_LEVEL_PUBLIC) for valid token, but no HuBMAP Read access or no token
+    #returns "data_access_level : protected" (HubmapConst.ACCESS_LEVEL_PROTECTED) for valid token with membership in the HuBMAP-Protected-Data group
+    #returns "data_access_level : consortium" (HuBMAPConst.ACCESS_LEVEL_CONSORTIUM) for valid token with membership in the HuBMAP-Read group, but not the HuBMAP-Protected-Data group
+    #raises an HTTPException with a 401 if any auth issues are found
+    def getUserDataAccessLevel(self, request):
+        if not 'Authorization' in request.headers and not 'Mauthorization' in request.headers:
+            user_info = {}
+            user_info['data_access_level'] = hubmap_const.HubmapConst.ACCESS_LEVEL_PUBLIC
+            return user_info
 
+        tokenResp = self.getAuthorizationTokens(request.headers)
+        if isinstance(tokenResp, Response):
+            raise exceptions.HTTPException("Invalid Authorization header", 401)
+
+        user_info = None
+        if isinstance(tokenResp, dict):
+            if 'nexus_token' in tokenResp:
+                user_info = self.getUserInfo(tokenResp['nexus_token'], True)
+            elif 'auth_token' in tokenResp:
+                user_info = self.getUserInfo(tokenResp['auth_token'], False) 
+            elif 'transfer_token' in tokenResp:
+                user_info = self.getUserInfo(tokenResp['transfer_token'], False)
+            else:
+                raise exceptions.HTTPException("No valid tokens found in MAuthorization Header", 401) 
+        else:
+            user_info = self.getUserInfo(tokenResp, True)
+            if isinstance(user_info, Response):
+                user_info = self.getUserInfo(tokenResp, False)
+        
+        if user_info is None or isinstance(user_info, Response):
+            raise exceptions.HTTPException("No valid authorization token found.", 401)
+        
+        if 'hmgroupids' in user_info:
+            protected_group_id = self.groupNameToId('HUBMAP-PROTECTED-DATA')['uuid']
+            read_id = self.groupNameToId('HuBMAP-READ')['uuid']
+            ids = user_info['hmgroupids']
+            if protected_group_id in ids:
+                user_info['data_access_level'] = hubmap_const.HubmapConst.ACCESS_LEVEL_PROTECTED 
+            elif read_id in ids:
+                user_info['data_access_level'] = hubmap_const.HubmapConst.ACCESS_LEVEL_CONSORTIUM
+            else:
+                user_info['data_access_level'] = hubmap_const.HubmapConst.ACCESS_LEVEL_PUBLIC
+        else:
+            user_info['data_access_level'] = hubmap_const.HubmapConst.ACCESS_LEVEL_PUBLIC
+            
+        return user_info
 
 class AuthCache:
     cache = {}
