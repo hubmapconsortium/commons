@@ -11,3 +11,13 @@ class HTTPException(Exception):
     
     def get_description(self):
         return self.description
+    
+    
+class ErrorMessage(Exception):
+    
+    def __init__(self, message):
+        Exception.__init__(self, message)
+        self.message = message
+        
+    def get_message(self):
+        return self.message
