@@ -99,6 +99,8 @@ class UUID_Generator(object):
             if r.ok == True:
                 data = json.loads(r.content.decode())
                 return data
+            elif r.status_code == 400 or r.status_code == 404:
+                return []
             else:
                 msg = 'HTTP Response: ' + str(r.status_code) + ' msg: ' + str(r.text) 
                 raise Exception(msg)

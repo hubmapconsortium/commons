@@ -10,6 +10,16 @@
     "generateuuid": false
   },
   {
+    "description": "Access to HuBMAP protected data",
+    "has_subgroups": false,
+    "identity_set_properties": null,
+    "uuid": "c0a18357-b036-11ea-96d3-0e2053f596b5",
+    "group_type": "regular",
+    "name": "HuBMAP-Protected-Data",
+    "displayname": "HuBMAP Protected Data",
+    "generateuuid": false
+  },
+  {
     "description": "Users who can submit HuBMAP datasets",
     "has_subgroups": false,
     "identity_set_properties": null,
