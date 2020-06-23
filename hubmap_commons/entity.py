@@ -863,6 +863,37 @@ class Entity(object):
                 raise be
     
     @staticmethod
+    def get_collection(driver, dataset_uuid):
+        """ Get collection by dataset's uuid
+
+        Args:
+            driver: Neo4j connection driver
+            dataset_uuid: uuid of dataset
+        Returns:
+            collection of the dataset
+        """
+        with driver.session() as session:
+            try:
+                stmt = f"""MATCH (dataset {{ {HubmapConst.UUID_ATTRIBUTE}: '{dataset_uuid}' }})
+                -[:{HubmapConst.IN_COLLECTION_REL}]->(c:{HubmapConst.COLLECTION_NODE_NAME}) RETURN c"""
+
+                for record in session.run(stmt):
+                    if record.get('c', None) != None:
+                        return record['c']
+            except ConnectionError as ce:
+                print('A connection error occurred: ', str(ce.args[0]))
+                raise ce
+            except ValueError as ve:
+                print('A value error occurred: ', ve.value)
+                raise ve
+            except CypherError as cse:
+                print('A Cypher error was encountered: ', cse.message)
+                raise cse
+            except:
+                print('A general error occurred: ')
+                traceback.print_exc()
+
+    @staticmethod
     def get_generic_entity_stmt(match_clause="", where_clause="", additional_return_clause ="",order_clause=""):
 
         # these OPTIONAL MATCH statements connect the entity to its immediate ancestors and descendants        
