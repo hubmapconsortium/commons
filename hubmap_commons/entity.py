@@ -4,12 +4,10 @@ Created on Apr 18, 2019
 @author: chb69
 '''
 from neo4j import TransactionError, CypherError
-import os
 import sys
 from hubmap_commons.hubmap_const import HubmapConst 
 from hubmap_commons.neo4j_connection import Neo4jConnection
 from hubmap_commons.uuid_generator import UUID_Generator
-import configparser
 from hubmap_commons.hm_auth import AuthCache, AuthHelper
 import pprint
 from flask import Response
@@ -18,6 +16,8 @@ import ast
 from hubmap_commons import string_helper
 import json
 from builtins import staticmethod
+import traceback
+
 #import appconfig
 
 class Entity(object):
