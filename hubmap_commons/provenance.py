@@ -483,13 +483,13 @@ class Provenance:
     
 if __name__ == "__main__":
 
-    NEO4J_SERVER = 'bolt://18.205.215.12:7687'
-    NEO4J_USERNAME = 'neo4j'
-    NEO4J_PASSWORD = 's4S^Y@pQ&_cc*HE@'
-    APP_CLIENT_ID = '21f293b0-5fa5-4ee1-9e0e-3cf88bd70114'
-    APP_CLIENT_SECRET = 'gimzYEgm/jMtPmNJ0qoV11gdicAK8dgu+yigj2m3MTE='
-    UUID_WEBSERVICE_URL = 'https://uuid-api.dev.hubmapconsortium.org/hmuuid'
-    HUBMAP_WEBSERVICE_FILEPATH = '/usr/src/assets'
+    NEO4J_SERVER = ''
+    NEO4J_USERNAME = ''
+    NEO4J_PASSWORD = ''
+    APP_CLIENT_ID = ''
+    APP_CLIENT_SECRET = ''
+    UUID_WEBSERVICE_URL = ''
+    HUBMAP_WEBSERVICE_FILEPATH = ''
     
        
     conf_data = {'NEO4J_SERVER' : NEO4J_SERVER, 'NEO4J_USERNAME': NEO4J_USERNAME, 
@@ -501,9 +501,9 @@ if __name__ == "__main__":
 
     prov = Provenance(conf_data['APP_CLIENT_ID'], conf_data['APP_CLIENT_SECRET'], conf_data['UUID_WEBSERVICE_URL'])
     # this is a Vanderbilt uuid:  uuid = '4614ea24338ec820569f988196a5c503'
-    uuid = '3ddc25fa696e01a84514f8194f52df72'
+    uuid = ''
     conn = Neo4jConnection(NEO4J_SERVER, NEO4J_USERNAME, NEO4J_PASSWORD)
-    nexus_token = 'AgYXKDY1aEGEVaN34X929eXp6wGqdxp9jYgP3E1EKkPX3bdPMbHWCM33D2lYzPm811OnxOo251QDm4TVo0Gr0UEqol'
+    nexus_token = ''
     driver = conn.get_driver()
     
 
