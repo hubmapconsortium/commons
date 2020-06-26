@@ -330,7 +330,11 @@ class Provenance:
                                        
                                 # Need to add the agent and organization here, plus the appropriate relationships (between the entity and the agent plus orgainzation)
                                 agent_record = self.get_agent_record(to_node)
-                                agent_uri = Provenance.build_uri('hubmap','agent',agent_record[ProvConst.HUBMAP_PROV_USER_UUID])
+                                agent_unique_id = str(agent_record[ProvConst.HUBMAP_PROV_USER_EMAIL]).replace('@', '-')
+                                agent_unique_id = str(agent_unique_id).replace('.', '-')
+                                if ProvConst.HUBMAP_PROV_USER_UUID in agent_record:
+                                    agent_unique_id =agent_record[ProvConst.HUBMAP_PROV_USER_UUID]
+                                agent_uri = Provenance.build_uri('hubmap','agent',agent_unique_id)
                                 organization_record = self.get_organization_record(to_node)
                                 organization_uri = Provenance.build_uri('hubmap','organization',organization_record[ProvConst.HUBMAP_PROV_GROUP_UUID])
                                 doc_agent = None
@@ -478,16 +482,34 @@ class Provenance:
         return self.groups_by_tmc_prefix
     
 if __name__ == "__main__":
+
+    NEO4J_SERVER = 'bolt://18.205.215.12:7687'
+    NEO4J_USERNAME = 'neo4j'
+    NEO4J_PASSWORD = 's4S^Y@pQ&_cc*HE@'
+    APP_CLIENT_ID = '21f293b0-5fa5-4ee1-9e0e-3cf88bd70114'
+    APP_CLIENT_SECRET = 'gimzYEgm/jMtPmNJ0qoV11gdicAK8dgu+yigj2m3MTE='
+    UUID_WEBSERVICE_URL = 'https://uuid-api.dev.hubmapconsortium.org/hmuuid'
+    HUBMAP_WEBSERVICE_FILEPATH = '/usr/src/assets'
     
        
-    confdata = Provenance.load_config_file()
-    conn = Neo4jConnection(confdata['neo4juri'], confdata['neo4jusername'], confdata['neo4jpassword'])
-    driver = conn.get_driver()
-    prov = Provenance(confdata['appclientid'], confdata['appclientsecret'], confdata['UUID_WEBSERVICE_URL'])
-    uuid = '398400024fda58e293cdb435db3c777e'
+    conf_data = {'NEO4J_SERVER' : NEO4J_SERVER, 'NEO4J_USERNAME': NEO4J_USERNAME, 
+                 'NEO4J_PASSWORD': NEO4J_PASSWORD,
+                 'APP_CLIENT_ID': APP_CLIENT_ID,
+                 'APP_CLIENT_SECRET': APP_CLIENT_SECRET,
+                 'UUID_WEBSERVICE_URL': UUID_WEBSERVICE_URL,
+                 'HUBMAP_WEBSERVICE_FILEPATH': HUBMAP_WEBSERVICE_FILEPATH}
+
+    prov = Provenance(conf_data['APP_CLIENT_ID'], conf_data['APP_CLIENT_SECRET'], conf_data['UUID_WEBSERVICE_URL'])
     # this is a Vanderbilt uuid:  uuid = '4614ea24338ec820569f988196a5c503'
-    uuid = 'a9ad6b2f324df4ef25ae1acf7de73649'
+    uuid = '3ddc25fa696e01a84514f8194f52df72'
+    conn = Neo4jConnection(NEO4J_SERVER, NEO4J_USERNAME, NEO4J_PASSWORD)
+    nexus_token = 'AgYXKDY1aEGEVaN34X929eXp6wGqdxp9jYgP3E1EKkPX3bdPMbHWCM33D2lYzPm811OnxOo251QDm4TVo0Gr0UEqol'
+    driver = conn.get_driver()
     
+
+    provenance_data = prov.get_provenance_history(driver, uuid)
+
+    print("Provenance data: " + str(provenance_data))
     #print('max depth')
     #history_data = prov.get_provenance_history(driver, uuid, None)
     
@@ -499,8 +521,8 @@ if __name__ == "__main__":
 
     
     #print('depth=4')
-    history_data = prov.get_provenance_history(driver, uuid)
-    print(history_data)
+    #history_data = prov.get_provenance_history(driver, uuid)
+    #print(history_data)
     #print(history_data.serialize(format='rdf', rdf_format='trig'))
     #print(history_data.serialize(format='provn'))
     
