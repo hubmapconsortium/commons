@@ -4,12 +4,10 @@ Created on Apr 18, 2019
 @author: chb69
 '''
 from neo4j import TransactionError, CypherError
-import os
 import sys
 from hubmap_commons.hubmap_const import HubmapConst 
 from hubmap_commons.neo4j_connection import Neo4jConnection
 from hubmap_commons.uuid_generator import UUID_Generator
-import configparser
 from hubmap_commons.hm_auth import AuthCache, AuthHelper
 import pprint
 from flask import Response
@@ -18,6 +16,8 @@ import ast
 from hubmap_commons import string_helper
 import json
 from builtins import staticmethod
+import traceback
+
 #import appconfig
 
 class Entity(object):
@@ -562,12 +562,13 @@ class Entity(object):
         #    additional_return_clause = additional_return_clause + ", entity."
         order_by_clause = " ORDER BY entity.{uuid_attrib} ".format(uuid_attrib=HubmapConst.UUID_ATTRIBUTE)
         stmt = Entity.get_generic_entity_stmt(match_clause, "", additional_return_clause, order_by_clause)
-        
+        print(stmt)
         with driver.session() as session:
             child_dict = {}
             return_object = {}
             try:
-                for record in session.run(stmt):
+                vals = session.run(stmt)
+                for record in vals:
                     #only create the return object once
                     if return_object == {}:
                         return_object['uuid'] = record['uuid']
@@ -581,6 +582,10 @@ class Entity(object):
                         if 'creators' in record['entity_properties'] and not string_helper.isBlank(record['entity_properties']['creators']):
                             creators_arry = json.loads(record['entity_properties']['creators'])
                             return_object['creators'] = creators_arry
+                        if  'description' in record['entity_properties'] and not string_helper.isBlank(record['entity_properties']['description']):
+                            return_object['description'] = record['entity_properties']['description']
+                        if  'label' in record['entity_properties'] and not string_helper.isBlank(record['entity_properties']['label']):
+                            return_object['name'] = record['entity_properties']['label']
                         if record['entity_metadata_properties'] != None:
                             new_metadata_dict = {}
                             for key in record['entity_metadata_properties'].keys():
