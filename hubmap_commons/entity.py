@@ -797,8 +797,8 @@ class Entity(object):
             try:
                 matching_stmt = """MATCH (entity {{ {uuid_attr}: '{uuid}' }})<-[:ACTIVITY_OUTPUT]-(e1)<-[r:ACTIVITY_INPUT|:ACTIVITY_OUTPUT*]-(all_ancestors:Entity)-[:{metadata_rel}]->(all_ancestors_metadata) 
                 """.format(uuid=uuid, uuid_attr=HubmapConst.UUID_ATTRIBUTE, metadata_rel=HubmapConst.HAS_METADATA_REL )
-                additional_return_clause = ", apoc.coll.toSet(COLLECT(all_ancestors { .*, metadata: properties(all_ancestors_metadata) } )) AS all_ancestors "
-                stmt = Entity.get_generic_entity_stmt(matching_stmt,"",additional_return_clause)
+                return_clause = " RETURN apoc.coll.toSet(COLLECT(all_ancestors { .*, metadata: properties(all_ancestors_metadata) } )) AS all_ancestors "
+                stmt = str(matching_stmt) + str(return_clause)
 
                 print ("Here is the statement: " + stmt)
                 for record in session.run(stmt, uuid=uuid):
@@ -822,8 +822,8 @@ class Entity(object):
             try:
                 matching_stmt = """MATCH (entity {{ {uuid_attr}: '{uuid}' }})-[:ACTIVITY_INPUT]-(a:Activity)-[r:ACTIVITY_INPUT|:ACTIVITY_OUTPUT*]->(all_descendants:Entity)-[:{metadata_rel}]->(all_descendants_metadata) 
                 """.format(uuid=uuid, uuid_attr=HubmapConst.UUID_ATTRIBUTE, metadata_rel=HubmapConst.HAS_METADATA_REL )
-                additional_return_clause = ", apoc.coll.toSet(COLLECT(all_descendants { .*, metadata: properties(all_descendants_metadata) } )) AS all_descendants "
-                stmt = Entity.get_generic_entity_stmt(matching_stmt,"",additional_return_clause)
+                return_clause = " RETURN apoc.coll.toSet(COLLECT(all_descendants { .*, metadata: properties(all_descendants_metadata) } )) AS all_descendants "
+                stmt = str(matching_stmt) + str(return_clause)
 
                 print ("Here is the statement: " + stmt)
                 for record in session.run(stmt, uuid=uuid):
@@ -963,7 +963,10 @@ def getTypeCode(type_code):
     return typeCodeDict[str(type_code).lower()]
 
 if __name__ == "__main__":
+    from hubmap_commons.test_helper import load_config
     #app_client_id, app_client_secret, uuid_webservice_url
+    
+    """
     webservice_url = 'http://localhost:5001/hmuuid'
     token = 'AgqmNezWyzbWp798lav9pe0yXnDdl11757kd7aopwDn0Me6rx2hqCMpwD41dbOE7vPJ9V646GeK0JViPkJMrbcky6Q'
     
@@ -981,6 +984,8 @@ if __name__ == "__main__":
     uuid_list = Entity.get_uuid_list(webservice_url, token, identifier_list)
     print('Given: ' + str(identifier_list))
     print('Returned: '+ str(uuid_list))
+    """
+    
           
     """
     confdata = appconfig.__dict__
@@ -1019,13 +1024,18 @@ if __name__ == "__main__":
     print("Count: " + str(len(editable_list)))
     """
     
-    """
+    file_path = '/home/chb69/git/ingest-ui/src/ingest-api/instance'
+    filename = 'app.cfg'
+    confdata = load_config(file_path, filename)
+    conn = Neo4jConnection(confdata['NEO4J_SERVER'], confdata['NEO4J_USERNAME'], confdata['NEO4J_PASSWORD'])
+    driver = conn.get_driver()
+    
     collection_uuid = "cc82c72adc8bb032b5044725107d2c7a"
     collection_list = Entity.get_entities_and_children_by_relationship(driver, collection_uuid, HubmapConst.IN_COLLECTION_REL)
     print("Collections")
     print(collection_list)
         
-    anc_dec_uuid = "13ceb39891c4d06fc8fb5dbb5b0c16a0"
+    anc_dec_uuid = "f3faaae262c4370f6ab9157b4b500b21"
     ancestor_list = Entity.get_ancestors(driver, anc_dec_uuid)
     print("Ancestors")
     print(ancestor_list)
@@ -1045,7 +1055,7 @@ if __name__ == "__main__":
     print("Children")
     print(children_list)
     print("count: " + str(len(children_list)))
-    """
+    
     
 
 
