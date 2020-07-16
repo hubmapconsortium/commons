@@ -91,11 +91,18 @@ class UUID_Generator(object):
     
     def getUUID(self, current_token, identifier):
         url = self.app_config['UUID_WEBSERVICE_URL'] + "/" + str(identifier)
+        
+        
+        
         if current_token == None or len(current_token) == 0:
             raise ValueError("Error in getNewUUID: the token cannot be blank")
         try:
             # take the incoming uuid_type and uppercase it
             r = requests.get(url, headers={'Content-Type':'application/json', 'Authorization': 'Bearer {token}'.format(token=current_token )})
+
+            print ("UUID WEBSERVICE: " + str(url))
+            print ("Token: " + str(current_token))
+
             if r.ok == True:
                 data = json.loads(r.content.decode())
                 return data

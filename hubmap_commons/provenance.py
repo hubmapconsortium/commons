@@ -25,6 +25,7 @@ from hubmap_commons.neo4j_connection import Neo4jConnection
 from hubmap_commons.uuid_generator import UUID_Generator
 from hubmap_commons.entity import Entity
 from hubmap_commons.hm_auth import AuthHelper, AuthCache
+from hubmap_commons.test_helper import load_config
 from builtins import staticmethod
 
 
@@ -483,31 +484,18 @@ class Provenance:
     
 if __name__ == "__main__":
 
-    NEO4J_SERVER = ''
-    NEO4J_USERNAME = ''
-    NEO4J_PASSWORD = ''
-    APP_CLIENT_ID = ''
-    APP_CLIENT_SECRET = ''
-    UUID_WEBSERVICE_URL = ''
-    HUBMAP_WEBSERVICE_FILEPATH = ''
-    
+    file_path = '/home/chb69/git/ingest-ui/src/ingest-api/instance'
+    filename = 'app.cfg'
+    confdata = load_config(file_path, filename)
        
-    conf_data = {'NEO4J_SERVER' : NEO4J_SERVER, 'NEO4J_USERNAME': NEO4J_USERNAME, 
-                 'NEO4J_PASSWORD': NEO4J_PASSWORD,
-                 'APP_CLIENT_ID': APP_CLIENT_ID,
-                 'APP_CLIENT_SECRET': APP_CLIENT_SECRET,
-                 'UUID_WEBSERVICE_URL': UUID_WEBSERVICE_URL,
-                 'HUBMAP_WEBSERVICE_FILEPATH': HUBMAP_WEBSERVICE_FILEPATH}
-
-    prov = Provenance(conf_data['APP_CLIENT_ID'], conf_data['APP_CLIENT_SECRET'], conf_data['UUID_WEBSERVICE_URL'])
-    # this is a Vanderbilt uuid:  uuid = '4614ea24338ec820569f988196a5c503'
-    uuid = ''
-    conn = Neo4jConnection(NEO4J_SERVER, NEO4J_USERNAME, NEO4J_PASSWORD)
-    nexus_token = ''
+    conn = Neo4jConnection(confdata['NEO4J_SERVER'], confdata['NEO4J_USERNAME'], confdata['NEO4J_PASSWORD'])
     driver = conn.get_driver()
+    prov = Provenance(confdata['APP_CLIENT_ID'], confdata['APP_CLIENT_SECRET'], confdata['UUID_WEBSERVICE_URL'])
+     # this is a Vanderbilt uuid:  uuid = '4614ea24338ec820569f988196a5c503'
+    uuid = '10959ad9dcddc069beca474736e9b13b'
     
 
-    provenance_data = prov.get_provenance_history(driver, uuid)
+    provenance_data = prov.get_provenance_history(driver, uuid, None, False)
 
     print("Provenance data: " + str(provenance_data))
     #print('max depth')

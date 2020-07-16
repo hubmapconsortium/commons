@@ -115,6 +115,8 @@ class HubmapConst(object):
     DATA_ACCESS_LEVEL_OPTIONS = [ACCESS_LEVEL_CONSORTIUM, ACCESS_LEVEL_PUBLIC,
                                     ACCESS_LEVEL_PROTECTED]
     
+    READ_ONLY_GROUP_DISPLAY_NAME = 'HuBMAP-read'
+    
     #Organ Specifiers
     BLADDER_ORGAN_SPECIFIER = 'BL'
     RIGHT_KIDNEY_ORGAN_SPECIFIER = 'RK'
