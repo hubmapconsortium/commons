@@ -4,13 +4,14 @@ import sys
 import os
 
 from hubmap_commons.neo4j_connection import Neo4jConnection
+from hubmap_commons.test_helper import load_config
 
 
 class TestNeo4jConnection(unittest.TestCase):
 
     def setUp(self):
         self.config = load_config_file()
-        self.conn = Neo4jConnection(self.config['neo4juri'], self.config['neo4jusername'], self.config['neo4jpassword'])
+        self.conn = Neo4jConnection(self.config['NEO4J_SERVER'], self.config['NEO4J_USERNAME'], self.config['NEO4J_PASSWORD'])
         self.driver = self.conn.get_driver()
 
     def tearDown(self):
@@ -32,25 +33,27 @@ class TestNeo4jConnection(unittest.TestCase):
             except Exception as e:
                 raise e
 
+    def test_stored_procedures(self):
+        with self.driver.session() as session:
+            tx = None
+            try:
+                tx = session.begin_transaction()
+                result = tx.run("CALL dbms.procedures() YIELD name, signature WITH * WHERE name STARTS WITH 'apoc.path.subgraphAll'  RETURN name, signature")
+                
+                for record in result:
+                    self.assertEqual(len(record), 2)
+                tx.close()
+            except Exception as e:
+                raise e
+
 
 def load_config_file():
     entity_config = {}
-    config = configparser.ConfigParser()
+    file_path = os.path.join(os.path.dirname(__file__), '../../ingest-ui/src/ingest-api/instance')
+    filename = 'app.cfg'
     try:
-        config.read(os.path.join(os.path.dirname(__file__), '..', 'app.properties'))
-        entity_config['neo4juri'] = config.get('NEO4J', 'server')
-        entity_config['neo4jusername'] = config.get('NEO4J', 'username')
-        entity_config['neo4jpassword'] = config.get('NEO4J', 'password')
-        entity_config['APP_CLIENT_ID'] = config.get('GLOBUS', 'APP_CLIENT_ID')
-        entity_config['APP_CLIENT_SECRET'] = config.get(
-            'GLOBUS', 'APP_CLIENT_SECRET')
-        entity_config['STAGING_ENDPOINT_UUID'] = config.get(
-            'GLOBUS', 'STAGING_ENDPOINT_UUID')
-        entity_config['PUBLISH_ENDPOINT_UUID'] = config.get(
-            'GLOBUS', 'PUBLISH_ENDPOINT_UUID')
-        entity_config['SECRET_KEY'] = config.get('GLOBUS', 'SECRET_KEY')
-        entity_config['UUID_UI_URL'] = config.get('HUBMAP', 'UUID_UI_URL')
-        return entity_config
+        config = load_config(file_path, filename)
+        return config
         #app.config['DEBUG'] = True
     except OSError as err:
         msg = "OS error.  Check config.ini file to make sure it exists and is readable: {0}".format(
