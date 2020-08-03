@@ -62,7 +62,132 @@ class TestDataIntegrity(unittest.TestCase):
                 print ('A general error occurred: ')
                 traceback.print_exc()
                 raise
-        
+
+    def test_all_timestamp_exist(self):
+        stmt = """MATCH (e) 
+        WHERE (NOT EXISTS(e.{prov_timestamp}) OR 
+        NOT EXISTS(e.{prov_mod_timestamp})) 
+        AND e.{entitytype} IN ['Dataset', 'Sample', 'Donor', 'Metadata'] 
+        RETURN count(e) AS record_count""".format(prov_timestamp=HubmapConst.PROVENANCE_CREATE_TIMESTAMP_ATTRIBUTE,
+                                                  prov_mod_timestamp=HubmapConst.PROVENANCE_MODIFIED_TIMESTAMP_ATTRIBUTE,
+                                                  entitytype=HubmapConst.ENTITY_TYPE_ATTRIBUTE)
+        with self.driver.session() as session:
+
+            try:
+                for record in session.run(stmt):
+                    record_count = int(record['record_count'])
+                    self.assertEqual(record_count, 0, 'error: found ' + str(record_count) + ' records with string values for ' + HubmapConst.PROVENANCE_CREATE_TIMESTAMP_ATTRIBUTE)
+
+            except CypherError as cse:
+                print ('A Cypher error was encountered: '+ cse.message)
+                raise
+            except:
+                print ('A general error occurred: ')
+                traceback.print_exc()
+                raise
+
+    def test_data_access_is_set(self):
+        stmt = """MATCH (e)-[:{metadata_rel}]->(m) 
+        WHERE NOT EXISTS(m.{data_access}) 
+        AND e.{entitytype} IN ['Dataset', 'Sample', 'Donor'] 
+        RETURN count(e) AS record_count""".format(metadata_rel=HubmapConst.HAS_METADATA_REL,
+                                                  data_access=HubmapConst.DATA_ACCESS_LEVEL,
+                                                  entitytype=HubmapConst.ENTITY_TYPE_ATTRIBUTE)
+        with self.driver.session() as session:
+
+            try:
+                for record in session.run(stmt):
+                    record_count = int(record['record_count'])
+                    self.assertEqual(record_count, 0, 'error: found ' + str(record_count) + ' records missing a value for data_access_level')
+
+            except CypherError as cse:
+                print ('A Cypher error was encountered: '+ cse.message)
+                raise
+            except:
+                print ('A general error occurred: ')
+                traceback.print_exc()
+                raise
+
+    def test_all_phi_is_protected(self):
+        stmt = """MATCH (e) WHERE e.{phi} = 'yes' AND e.{data_access} <> '{protected_access}'  
+        RETURN count(e) AS record_count""".format(phi=HubmapConst.HAS_PHI_ATTRIBUTE,
+                                                  data_access=HubmapConst.DATA_ACCESS_LEVEL,
+                                                  protected_access=HubmapConst.ACCESS_LEVEL_PROTECTED)
+        with self.driver.session() as session:
+
+            try:
+                for record in session.run(stmt):
+                    record_count = int(record['record_count'])
+                    self.assertEqual(record_count, 0, 'error: found ' + str(record_count) + ' PHI records where data_access_level is not \'protected\'')
+
+            except CypherError as cse:
+                print ('A Cypher error was encountered: '+ cse.message)
+                raise
+            except:
+                print ('A general error occurred: ')
+                traceback.print_exc()
+                raise
+
+    def test_all_entities_have_metadata(self):
+        stmt = """MATCH (e) WHERE NOT (e)-[:{metadata_rel}]->() AND 
+        (e.{entitytype} IN ['Dataset', 'Sample', 'Donor'] OR EXISTS(e.{activitytype})) RETURN COUNT (e) AS record_count""".format(phi=HubmapConst.HAS_PHI_ATTRIBUTE,
+                                                  entitytype=HubmapConst.ENTITY_TYPE_ATTRIBUTE,
+                                                  activitytype=HubmapConst.ACTIVITY_TYPE_ATTRIBUTE,
+                                                  metadata_rel=HubmapConst.HAS_METADATA_REL)
+        with self.driver.session() as session:
+
+            try:
+                for record in session.run(stmt):
+                    record_count = int(record['record_count'])
+                    self.assertEqual(record_count, 0, 'error: found ' + str(record_count) + ' PHI records where data_access_level is not \'protected\'')
+
+            except CypherError as cse:
+                print ('A Cypher error was encountered: '+ cse.message)
+                raise
+            except:
+                print ('A general error occurred: ')
+                traceback.print_exc()
+                raise
+
+    def test_all_activities_have_inputs(self):
+        stmt = """MATCH (act) 
+        WHERE NOT ()-[:{act_input_rel}]->(act) AND EXISTS(act.{activitytype}) 
+         RETURN COUNT (act) AS record_count""".format(act_input_rel=HubmapConst.ACTIVITY_INPUT_REL,
+                                                  activitytype=HubmapConst.ACTIVITY_TYPE_ATTRIBUTE)
+        with self.driver.session() as session:
+
+            try:
+                for record in session.run(stmt):
+                    record_count = int(record['record_count'])
+                    self.assertEqual(record_count, 0, 'error: found ' + str(record_count) + ' PHI records where data_access_level is not \'protected\'')
+
+            except CypherError as cse:
+                print ('A Cypher error was encountered: '+ cse.message)
+                raise
+            except:
+                print ('A general error occurred: ')
+                traceback.print_exc()
+                raise
+
+    def test_all_activities_have_inputs(self):
+        stmt = """MATCH (n)
+            WHERE NOT (n)--() AND n.{entitytype} <> 'Lab'
+            RETURN COUNT(n) AS record_count;""".format(entitytype=HubmapConst.ENTITY_TYPE_ATTRIBUTE)
+        with self.driver.session() as session:
+
+            try:
+                for record in session.run(stmt):
+                    record_count = int(record['record_count'])
+                    self.assertEqual(record_count, 0, 'error: found ' + str(record_count) + ' orphaned nodes')
+
+            except CypherError as cse:
+                print ('A Cypher error was encountered: '+ cse.message)
+                raise
+            except:
+                print ('A general error occurred: ')
+                traceback.print_exc()
+                raise
+       
         
         
 def load_config_file():
