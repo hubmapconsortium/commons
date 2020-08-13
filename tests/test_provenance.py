@@ -98,6 +98,24 @@ class TestProvenance(unittest.TestCase):
             group_info = self.prov.get_group_by_identifier(group_id)
             self.assertNotEqual(group_info, None, 'test_load_group_data failed.  Could not find any group data for identifier: ' + group_id)
 
+    def test_get_agent_record(self):
+        donor_list = Entity.get_entities_by_type(self.driver, 'Donor')
+        
+        # walk through the first 5 donors and test them
+        for x in range(6):
+            entity_record = Entity.get_entity(self.driver, donor_list[x])
+            agent_record = self.prov.get_agent_record(entity_record)
+            self.assertIsNotNone(agent_record, 'Error could not find agent info for donor uuid: ' + donor_list[x])
+    
+    def test_get_organization_record(self):
+        donor_list = Entity.get_entities_by_type(self.driver, 'Donor')
+        
+        # walk through the first 5 donors and test them
+        for x in range(6):
+            entity_record = Entity.get_entity(self.driver, donor_list[x])
+            org_record = self.prov.get_organization_record(entity_record)
+            self.assertIsNotNone(org_record, 'Error could not find organization info for donor uuid: ' + donor_list[x])
+
 
 def load_config_file():
     entity_config = {}
