@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="hubmap-commons",
-    version="1.12.2",
+    version="1.12.3",
     author="Chuck Borromeo",
     author_email="chb69@pitt.edu",
     description="The common tools required by the HuMBAP web services",
