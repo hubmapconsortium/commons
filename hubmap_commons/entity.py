@@ -549,16 +549,23 @@ class Entity(object):
         plus any connected metadata (entity_metadata_properties).  These records will repeat for each child returned.  For each
         child, the query returns: child_entity_properties, child_metadata_properties.          
         """
-                
+        
+        #this is a collection, so we only return only collections which 
+        #are marked for doi registration (doi_registered can be true or false)
+        addl_where = ""
+        if relationship_label == HubmapConst.IN_COLLECTION_REL:
+            addl_where = " and not entity.doi_registered is null "
+            
         match_clause = """MATCH (entity)<-[:{relationship_label}]-(child_entity)
-        WHERE entity.{uuid_attrib}= '{identifier}'
+        WHERE entity.{uuid_attrib}= '{identifier}' {addl_where}
         OPTIONAL MATCH (child_entity)-[:{has_metadata_attr}]->(child_metadata)""".format(relationship_label=relationship_label,
                                                                                          uuid_attrib=HubmapConst.UUID_ATTRIBUTE, identifier=identifier, 
-                                                                                         has_metadata_attr=HubmapConst.HAS_METADATA_REL)
+                                                                                         has_metadata_attr=HubmapConst.HAS_METADATA_REL,
+                                                                                         addl_where=addl_where)
         additional_return_clause = ", properties(child_entity) AS child_entity_properties, properties(child_metadata) AS child_metadata_properties "
 
-        #this is a collection, so get the extra Collection attributes 
-        #if relationship_label == HubmapConst.IN_COLLECTION_REL:
+        
+        #
         #    additional_return_clause = additional_return_clause + ", entity."
         order_by_clause = " ORDER BY entity.{uuid_attrib} ".format(uuid_attrib=HubmapConst.UUID_ATTRIBUTE)
         stmt = Entity.get_generic_entity_stmt(match_clause, "", additional_return_clause, order_by_clause)
