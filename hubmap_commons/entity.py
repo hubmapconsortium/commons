@@ -593,6 +593,11 @@ class Entity(object):
                             return_object['description'] = record['entity_properties']['description']
                         if  'label' in record['entity_properties'] and not string_helper.isBlank(record['entity_properties']['label']):
                             return_object['name'] = record['entity_properties']['label']
+                        if 'doi_url' in record['entity_properties'] and not string_helper.isBlank(record['entity_properties']['doi_url']):
+                            return_object['doi_url'] = record['entity_properties']['doi_url']
+                        if 'registered_doi' in record['entity_properties'] and not string_helper.isBlank(record['entity_properties']['registered_doi']):
+                            return_object['registered_doi'] = record['entity_properties']['registered_doi']
+                            
                         if record['entity_metadata_properties'] != None:
                             new_metadata_dict = {}
                             for key in record['entity_metadata_properties'].keys():
