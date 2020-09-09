@@ -97,7 +97,7 @@ class HubmapConst(object):
     SOURCE_UUID_ATTRIBUTE = 'source_uuid'
     SOURCE_DISPLAY_ID_ATTRIBUTE = 'source_display_id'
     RUI_LOCATION_ATTRIBUTE = 'rui_location'
-    COLLECTION_DOI_REGISTERED_ATTRIBUTE = 'doi_registered'
+    COLLECTION_DOI_REGISTERED_ATTRIBUTE = 'has_doi'
     COLLECTION_CREATORS_ATTRIBUTE = 'creators'
     CREATOR_FULL_NAME_ATTRIBUTE = 'name'
     CREATOR_FIRST_NAME_ATTRIBUTE = 'first_name'
