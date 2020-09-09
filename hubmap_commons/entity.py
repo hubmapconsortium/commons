@@ -551,10 +551,10 @@ class Entity(object):
         """
         
         #this is a collection, so we only return only collections which 
-        #are marked for doi registration (doi_registered can be true or false)
+        #are marked for doi registration (has_doi can be true or false)
         addl_where = ""
         if relationship_label == HubmapConst.IN_COLLECTION_REL:
-            addl_where = " and not entity.doi_registered is null "
+            addl_where = " and not entity.has_doi is null "
             
         match_clause = """MATCH (entity)<-[:{relationship_label}]-(child_entity)
         WHERE entity.{uuid_attrib}= '{identifier}' {addl_where}
@@ -584,8 +584,8 @@ class Entity(object):
                         return_object['display_doi'] = record['display_doi']
                         return_object['hubmap_identifier'] = record['hubmap_identifier']
                         return_object['properties'] = record['entity_metadata_properties']
-                        if 'doi_registered' in record['entity_properties']:
-                            return_object['doi_registered'] = record['entity_properties']['doi_registered']
+                        if 'has_doi' in record['entity_properties']:
+                            return_object['has_doi'] = record['entity_properties']['has_doi']
                         if 'creators' in record['entity_properties'] and not string_helper.isBlank(record['entity_properties']['creators']):
                             creators_arry = json.loads(record['entity_properties']['creators'])
                             return_object['creators'] = creators_arry
