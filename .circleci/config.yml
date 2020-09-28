@@ -10,4 +10,8 @@ jobs:
 workflows:
   main:
     jobs:
-      - build
+      - build:
+          filters:
+            branches:
+              only:  cborromeo/circle_ci
+
