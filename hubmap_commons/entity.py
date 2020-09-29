@@ -589,6 +589,9 @@ class Entity(object):
                         if 'creators' in record['entity_properties'] and not string_helper.isBlank(record['entity_properties']['creators']):
                             creators_arry = json.loads(record['entity_properties']['creators'])
                             return_object['creators'] = creators_arry
+                        if 'contacts' in record['entity_properties'] and not string_helper.isBlank(record['entity_properties']['contacts']):
+                            contacts_arry = json.loads(record['entity_properties']['contacts'])
+                            return_object['contacts'] = contacts_arry                            
                         if 'provenance_create_timestamp' in record['entity_properties']:
                             return_object['provenance_create_timestamp'] = record['entity_properties']['provenance_create_timestamp']
                         if 'provenance_modified_timestamp' in record['entity_properties']:
