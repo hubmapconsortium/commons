@@ -1,5 +1,9 @@
 version: 2.1
 
+general:
+  branches:
+    only: cborromeo/circle_ci
+
 jobs:
   build:
     docker:
