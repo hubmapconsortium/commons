@@ -114,6 +114,12 @@ class Neo4jConnection(object):
             uuid = update_record.pop(HubmapConst.UUID_ATTRIBUTE)
         except KeyError as keyerror:
             raise KeyError("Error: Unable to find UUID in the update record")
+
+        # remove any fields that we do not want to overwrite 
+        if HubmapConst.PROVENANCE_MODIFIED_TIMESTAMP_ATTRIBUTE in update_record:
+            update_record.pop(HubmapConst.PROVENANCE_MODIFIED_TIMESTAMP_ATTRIBUTE)
+        if HubmapConst.PROVENANCE_CREATE_TIMESTAMP_ATTRIBUTE in update_record:
+            update_record.pop(HubmapConst.PROVENANCE_CREATE_TIMESTAMP_ATTRIBUTE)
         
         attr_string = "{"
         for key in update_record.keys():
