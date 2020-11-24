@@ -27,7 +27,7 @@ class _AssayType(object):
     description: str
     primary: bool
 
-    def __init__(self, info: JSONType):
+    def __init__(self, info: Dict[str, Any]):
         """
         The instance is initialized based on a dict provided by TypeClient.
         The dict must match the format produced by self.to_json().
@@ -38,7 +38,7 @@ class _AssayType(object):
         self.primary = info['primary']
         pass
 
-    def to_json(self) -> JSONType:
+    def to_json(self) -> Dict[str, Any]:
         """
         Returns a JSON-compatible representation of the assay type
         """
@@ -70,6 +70,7 @@ class TypeClient(object, metaclass=SingletonMetaClass):
     If the constructor is called again, it returns the same instance as before.
     This is for convenience in initializing the service.
     """
+    app_config: Dict[str, Any]
 
     def __init__(self, type_webservice_url: StringOrNone = None):
         """
@@ -129,6 +130,7 @@ class TypeClient(object, metaclass=SingletonMetaClass):
         url = self.app_config['TYPE_WEBSERVICE_URL'] + 'assayname'
         data = self._wrapped_transaction(url, method='POST',
                                          data={'name': name})
+        assert isinstance(data, Dict)
         return _AssayType(data)
 
     def iterAssayNames(self, primary: BoolOrNone = None) -> Iterable[str]:
@@ -148,10 +150,13 @@ class TypeClient(object, metaclass=SingletonMetaClass):
             else:
                 url += '&primary=false'
         data = self._wrapped_transaction(url)
+        assert isinstance(data, Dict) and 'result' in data
+        assert isinstance(data['result'], List)
         for elt in data['result']:
+            assert isinstance(elt, str)
             yield elt
 
-    def iterAssays(self, primary: BoolOrNone = None) -> Iterable[str]:
+    def iterAssays(self, primary: BoolOrNone = None) -> Iterable[_AssayType]:
         """
         Return an iterator over valid assay types.
 
@@ -168,5 +173,8 @@ class TypeClient(object, metaclass=SingletonMetaClass):
             else:
                 url += '&primary=false'
         data = self._wrapped_transaction(url)
+        assert isinstance(data, Dict) and 'result' in data
+        assert isinstance(data['result'], List)
         for elt in data['result']:
+            assert isinstance(elt, Dict)
             yield _AssayType(elt)
