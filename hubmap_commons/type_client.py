@@ -6,24 +6,31 @@ Created on November 22, 2020
 
 import requests
 import json
-import os
-import sys
 from typing import Union, List, TypeVar, Iterable, Dict, Any
-from pprint import pprint
-from flask import session
 from requests.exceptions import TooManyRedirects
-from singleton_metaclass import ClassIsInstanceMeta
+from pprint import pprint
+from .singleton_metaclass import SingletonMetaClass
 
 BoolOrNone = Union[bool, None]
+
+StringOrNone = Union[str, None]
 
 JSONType = Union[str, int, float, bool, None, Dict[str, Any], List[Any]]
 
 class _AssayType(object):
+    """
+    A class representing a single assay type, accessible only via TypeClient.getAssayType
+    and .iterAssays
+    """
     name: str
     description: str
     primary: bool
 
     def __init__(self, info: JSONType):
+        """
+        The instance is initialized based on a dict provided by TypeClient.  The
+        dict must match the format produced by self.to_json().
+        """
         # Needs to set self.name, self.description, self.primary
         self.name = info['name']
         self.description = info['description']
@@ -37,24 +44,51 @@ class _AssayType(object):
         return {'name': self.name, 'primary': self.primary,
                 'description': self.description}
     
-    def __str__(self):
+    def __str__(self) -> str:
         return(f'AssayType({self.description})')
     
-    def __repr__(self):
+    def __repr__(self)-> str:
         return(f'AssayType({self.to_json()})')
-
-
-class TypeClient(object, metaclass=ClassIsInstanceMeta):
     
-    app_config = {}
-    
-    def __init__(self, type_webservice_url: str):
-        """
-        """
-        assert 'TYPE_WEBSERVICE_URL' not in self.app_config, 'initialized twice!'
-        self.app_config['TYPE_WEBSERVICE_URL'] = type_webservice_url
+    def __eq__(self, other):
+        if isinstance(other, type(self)):
+            return self.to_json() == other.to_json()
+        else:
+            raise NotImplemented()
 
-    def _wrapped_transaction(self, url, data=None, method="GET"):
+    def __ne__(self, other):
+        if isinstance(other, type(self)):
+            return self.to_json() != other.to_json()
+        else:
+            raise NotImplemented()
+
+
+class TypeClient(object, metaclass=SingletonMetaClass):
+    """
+    This is a singleton- only a single instance of this class is ever created.  If
+    the constructor is called again, it returns the same instance as before.  This
+    is for convenience in initializing the service.
+    """
+        
+    def __init__(self, type_webservice_url:StringOrNone = None):
+        """
+        type_webservice_url must be provided the first time the constructor is
+        called.  Thereafter, all calls return the same instance and are already
+        initialized with that service URL.
+        """
+        if type_webservice_url is None:
+            if not (hasattr(self, 'app_config')
+                    and 'TYPE_WEBSERVICE_URL' in self.app_config):
+                raise RuntimeError('TypeClient has not been initialized')
+        else:
+            self.app_config = {}
+            self.app_config['TYPE_WEBSERVICE_URL'] = type_webservice_url
+        
+
+    def _wrapped_transaction(self, url, data=None, method="GET") -> JSONType:
+        """
+        Provide error and exception handling for requests.
+        """
         try:
             if method=="GET":
                 assert data is None, "No message body for GET transactions"
@@ -83,12 +117,24 @@ class TypeClient(object, metaclass=ClassIsInstanceMeta):
             raise e
 
     def getAssayType(self, name: str) -> _AssayType:
+        """
+        Given an assay name, return the associated assay type.  If a deprecated
+        alt-name is provided, the returned assay type will use the up-to-date name.
+        """
         url = self.app_config['TYPE_WEBSERVICE_URL'] + 'assayname'
         data = self._wrapped_transaction(url, method='POST', data={'name':name})
         return _AssayType(data)
-        print(f'getAssayType({name}) -> {data}')
 
     def iterAssayNames(self, primary: BoolOrNone = None)-> Iterable[str]:
+        """
+        Return an iterator over valid assay name strings.
+        
+        primary: controls the subset of valid names, as follows:
+            None or not specified: return all valid names.
+            True: return only the names of primary assay types, that is, those for
+                which no parent is an assay.
+            False: return only the names of non-primary assay types.
+        """
         url = self.app_config['TYPE_WEBSERVICE_URL'] + 'assaytype?simple=true'
         if primary is not None:
             if primary:
@@ -100,6 +146,15 @@ class TypeClient(object, metaclass=ClassIsInstanceMeta):
             yield elt
 
     def iterAssays(self, primary: BoolOrNone = None)-> Iterable[str]:
+        """
+        Return an iterator over valid assay types.
+        
+        primary: controls the subset of valid assay types, as follows:
+            None or not specified: return all valid types.
+            True: return only primary assay types, that is, those for which no 
+                parent is an assay.
+            False: return only non-primary assay types.
+        """
         url = self.app_config['TYPE_WEBSERVICE_URL'] + 'assaytype?simple=false'
         if primary is not None:
             if primary:
@@ -110,35 +165,4 @@ class TypeClient(object, metaclass=ClassIsInstanceMeta):
         for elt in data['result']:
             yield _AssayType(elt)
 
-
-if __name__ == '__main__':
-    try:
-        tc = TypeClient("http://localhost:8686/")
-        print('all assay names: ',)
-        pprint([elt for elt in tc.iterAssayNames()], compact=True)
-        print('primary assay names: ',)
-        pprint([elt for elt in tc.iterAssayNames(primary=True)], compact=True)
-        print('non-primary assay names:')
-        pprint([elt for elt in tc.iterAssayNames(primary=False)], compact=True)
-        print('primary assay types as str:')
-        pprint([str(elt) for elt in tc.iterAssays(primary=True)], compact=True)
-        print('non-primary assay types:')
-        pprint([elt for elt in tc.iterAssays(primary=False)], compact=True)
-        print('testing name translations:')
-        for name, note in [('codex', 'this should fail'),
-                           ('CODEX', 'this should work'),
-                           ('codex_cytokit', 'this is not primary'),
-                           ('salmon_rnaseq_bulk', 'this is an alt name'),
-                           (['PAS', 'Image Pyramid'],
-                            'this is a complex alt name'),
-                           (['IMC', 'foo'],
-                            'this is an invalid complex alt name')]:
-            try:
-                assay = tc.getAssayType(name)
-                print(f'{name} produced {assay.name} {assay.description}')
-                print(f'{assay.to_json()}')
-            except Exception as e:
-                print(f'{name} ({note}) -> exception {e}')
-    except Exception as e:
-        pprint(e)
     
