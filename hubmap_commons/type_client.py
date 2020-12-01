@@ -36,14 +36,16 @@ class _AssayType(object):
         self.name = info['name']
         self.description = info['description']
         self.primary = info['primary']
-        pass
+        self.vitessce_hints = (info['vitessce-hints'] if 'vitessce-hints' in info
+                              else [])
 
     def to_json(self) -> Dict[str, Any]:
         """
         Returns a JSON-compatible representation of the assay type
         """
         return {'name': self.name, 'primary': self.primary,
-                'description': self.description}
+                'description': self.description,
+                'vitessce-hints': self.vitessce_hints}
 
     def __str__(self) -> str:
         return(f'AssayType({self.description})')
@@ -84,6 +86,8 @@ class TypeClient(object, metaclass=SingletonMetaClass):
                 raise RuntimeError('TypeClient has not been initialized')
         else:
             self.app_config = {}
+            if not type_webservice_url.endswith('/'):
+                type_webservice_url += '/'  # Avoid a common config problem
             self.app_config['TYPE_WEBSERVICE_URL'] = type_webservice_url
 
     def _wrapped_transaction(self, url, data=None, method="GET") -> JSONType:
