@@ -21,7 +21,7 @@ dict
     A dict containing the groups details
 """
 @cached(cache)
-def load_globus_groups_json_file():
+def get_globus_groups_info():
     with open(AuthCache.groupJsonFilename) as file:
         groups = json.load(file)
 
