@@ -4,6 +4,7 @@ import functools
 import logging
 
 # HuBMAP commons
+from hubmap_commons import string_helper
 from hubmap_commons.hm_auth import AuthHelper, AuthCache
 
 # LRU Cache implementation with per-item time-to-live (TTL) value
