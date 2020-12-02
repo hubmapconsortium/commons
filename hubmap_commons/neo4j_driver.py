@@ -3,7 +3,7 @@ from neo4j import GraphDatabase
 # Python modules are first-class runtime objects, 
 # they effectively become singletons, 
 # initialized at the time of first import.
-def initialize(uri, user, password)
+def initialize(uri, user, password):
     # Two leading underscores signals to Python that 
     # you want the variable to be "private" to the module
     global __NEO4J_DRIVER__
