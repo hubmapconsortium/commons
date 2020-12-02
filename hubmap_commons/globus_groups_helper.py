@@ -1,6 +1,7 @@
 import json
 from cachetools import cached, TTLCache
 import functools
+import logging
 
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper, AuthCache
@@ -12,6 +13,7 @@ from hubmap_commons.hm_auth import AuthHelper, AuthCache
 # Expire the cache after the time-to-live (seconds): two hours, 7200 seconds
 cache = TTLCache(128, ttl=7200)
 
+logger = logging.getLogger(__name__)
 
 """
 Load the globus groups information json file
@@ -26,7 +28,7 @@ def get_globus_groups_info():
     with open(AuthCache.groupJsonFilename) as file:
         groups = json.load(file)
 
-        app.logger.info("Globus groups json file loaded successfully")
+        logger.info("Globus groups json file loaded successfully")
 
         groups_by_id = {}
         groups_by_name = {}
@@ -55,14 +57,14 @@ def get_globus_groups_info():
                 groups_by_name[group['name'].lower().strip()] = group_obj
                 groups_by_id[group['uuid']] = group_obj
 
-                app.logger.debug("======groups_by_id======")
-                app.logger.debug(groups_by_id)
+                logger.debug("======groups_by_id======")
+                logger.debug(groups_by_id)
 
-                app.logger.debug("======groups_by_name======")
-                app.logger.debug(groups_by_name)
+                logger.debug("======groups_by_name======")
+                logger.debug(groups_by_name)
 
-                app.logger.debug("======groups_by_tmc_prefix======")
-                app.logger.debug(groups_by_tmc_prefix)
+                logger.debug("======groups_by_tmc_prefix======")
+                logger.debug(groups_by_tmc_prefix)
         
         # Wrap the final data
         globus_groups = {
