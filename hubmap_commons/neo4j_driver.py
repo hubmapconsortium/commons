@@ -1,12 +1,11 @@
 from neo4j import GraphDatabase, Driver
 
 # Python modules are first-class runtime objects, 
-# they effectively become singletons, 
-# initialized at the time of first import.
+# they effectively become singletons, initialized at the time of first import.
 
-# Two leading underscores signals to Python that 
-# you want the variable to be "private" to the module
-__NEO4J_DRIVER__ = None
+# In Python, "privacy" depends on "consenting adults'" levels of agreement, we can't force it.
+# A single leading underscore means you're not supposed to access it "from the outside"
+_driver = None
 
 """
 Create a neo4j.Driver singleton instance
@@ -25,25 +24,25 @@ Returns
 neo4j.Driver
     A neo4j.Driver instance
 """
-def get_instance(uri, username, password):
+def instance(uri, username, password):
     # Specify as module-scope variable
-    global __NEO4J_DRIVER__
+    global _driver
 
-    if __NEO4J_DRIVER__ is None:
-        __NEO4J_DRIVER__ = GraphDatabase.driver(uri, auth=(username, password))
+    if _driver is None:
+        _driver = GraphDatabase.driver(uri, auth=(username, password))
     
-    return __NEO4J_DRIVER__
+    return _driver
 
 """
 Shut down, closing any open connections in the pool
 """
 def close():
     # Specify as module-scope variable
-    global __NEO4J_DRIVER__
+    global _driver
 
-    if isinstance(__NEO4J_DRIVER__, Driver):
-        __NEO4J_DRIVER__.close()
-        __NEO4J_DRIVER__ = None
+    if isinstance(_driver, Driver):
+        _driver.close()
+        _driver = None
     else:
-        raise TypeError("The private module variable '__NEO4J_DRIVER__' is not a neo4j.Driver object")
+        raise TypeError("The private module variable '_driver' is not a neo4j.Driver object")
         

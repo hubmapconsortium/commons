@@ -75,3 +75,10 @@ def get_globus_groups_info():
         }
         
         return globus_groups
+
+"""
+Clear or invalidate the function cache even before it expires
+"""
+def clear_globus_groups_cache():
+    logger.info("Globus groups json cache cleared")
+    cache.clear()
