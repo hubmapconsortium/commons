@@ -20,6 +20,7 @@ setup(
                       'jsonschema==3.2.0',
                       'requests>=2.22.0',
                       'jsonref-ap==0.3.dev0',
+                      'cachetools==4.1.0',
                       'PyYAML>=5.2'
                       ],
     classifiers=[
