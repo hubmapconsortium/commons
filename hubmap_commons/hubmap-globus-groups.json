@@ -201,7 +201,7 @@
   },
   {
     "description": "Users who have write access to the testing folder",
-    "data_provider": false,
+    "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "5bd084c8-edc2-11e8-802f-0e368f3075e8",

@@ -59,7 +59,7 @@ class UUID_Generator(object):
             exit(0)
     """
     
-    def getNewUUID(self, current_token, uuid_type, hubmap_identifier=None, sample_count=1):
+    def getNewUUID(self, current_token, uuid_type, sample_count=1):
         url = self.app_config['UUID_WEBSERVICE_URL'] + "?sample_count=" + str(sample_count)
         if current_token == None or len(current_token) == 0:
             raise ValueError("Error in getNewUUID: the token cannot be blank")
@@ -68,7 +68,7 @@ class UUID_Generator(object):
         try:
             # take the incoming uuid_type and uppercase it
             uuid_datatype = str(uuid_type).upper()
-            r = requests.post(url, json={"entityType" : "{uuid_datatype}".format(uuid_datatype=uuid_datatype), "generateDOI" : "true", "hubmap-ids" : hubmap_identifier}, 
+            r = requests.post(url, json={"entity_type" : "{uuid_datatype}".format(uuid_datatype=uuid_datatype)}, 
                               headers={'Content-Type':'application/json', 'Authorization': 'Bearer {token}'.format(token=current_token )})
             if r.ok == True:
                 data = json.loads(r.content.decode())
