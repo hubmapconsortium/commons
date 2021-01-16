@@ -7,7 +7,7 @@
     "uuid": "5777527e-ec11-11e8-ab41-0af86edb4424",
     "group_type": "regular",
     "name": "HuBMAP-Read",
-    "displayname": "HuBMAP-read",
+    "displayname": "HuBMAP Read",
     "generateuuid": false
   },
   {
@@ -29,7 +29,7 @@
     "uuid": "89a69625-99d7-11ea-9366-0e98982705c1",
     "group_type": "regular",
     "name": "HuBMAP-Data-Admin",
-    "displayname": "HuBMAP-data-admin",
+    "displayname": "HuBMAP Data Admin",
     "generateuuid": false
   },
   {
@@ -196,7 +196,7 @@
     "uuid": "2cf25858-ed44-11e8-991d-0e368f3075e8",
     "group_type": "regular",
     "name": "HuBMAP-All-Access",
-    "displayname": "HuBMAP-All-Access",
+    "displayname": "HuBMAP All Access",
     "generateuuid": true
   },
   {
