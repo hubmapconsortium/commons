@@ -246,7 +246,7 @@ class AuthHelper:
 
     #get the highest level access level given the token embedded in the HTTP request
     #if a valid token is found in the HTTP request the full user_info dictionary is returned with "data_access_level" attribute added
-    #if public access and no token just {"data_access_level":"level"} dictionary is returned
+    #if public access and no token just {"data_access_level":"public"} dictionary is returned
     #returns "data_access_level : public" (HubmapConst.ACCESS_LEVEL_PUBLIC) for valid token, but no HuBMAP Read access or no token
     #returns "data_access_level : protected" (HubmapConst.ACCESS_LEVEL_PROTECTED) for valid token with membership in the HuBMAP-Protected-Data group
     #returns "data_access_level : consortium" (HuBMAPConst.ACCESS_LEVEL_CONSORTIUM) for valid token with membership in the HuBMAP-Read group, but not the HuBMAP-Protected-Data group
