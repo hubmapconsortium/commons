@@ -1,5 +1,7 @@
 from hubmap_commons import string_helper
 from flask import Response
+from flask import Request
+
 import flask
 import base64
 import requests
@@ -9,6 +11,7 @@ import threading
 import json
 import os
 import re
+from hubmap_commons.exceptions import HTTPException
 from hubmap_commons import file_helper
 from hubmap_commons import hubmap_const
 from hubmap_commons import exceptions
@@ -86,6 +89,17 @@ class AuthHelper:
     applicationClientId = None
     applicationClientSecret = None
 
+    @staticmethod
+    def configured_instance(clientId, clientSecret):
+        if not helperInstance is None:
+            if clientId == helperInstance.applicationClientId and clientSecret == helperInstance.applicationClientSecret:
+                return(helperInstance)
+            else:
+                raise Exception("AuthHelper instance exists already with a different client id/secret pair")
+        else:
+            return(AuthHelper.create(clientId, clientSecret))
+
+    
     @staticmethod
     def create(clientId, clientSecret):
         if helperInstance is not None:
@@ -294,6 +308,56 @@ class AuthHelper:
             
         return user_info
 
+    #checks to see if the user identified by the nexus token in the request
+    #is allowed to write to either specified by the group_uuid field or barring
+    #a specific group_uuid checks to see if the user is a member of one (and only one)
+    #group that is allowed to write
+    #
+    #If an auth error occurs a HTTPException is thrown
+    #which can be easily handled to return a good error Response
+    #for a web service method
+    def get_write_group_uuid(self, request_or_token, group_uuid = None):
+        print(str(type(request_or_token)))
+        if isinstance(request_or_token, str): 
+            user_info = self.getUserInfo(request_or_token, getGroups=True)
+        else:
+            user_info = self.getUserInfoUsingRequest(request_or_token, getGroups=True)
+
+        if isinstance(user_info, Response):
+            raise HTTPException("Error while getting user information from token. " + user_info.get_data(as_text=True), user_info.status_code)
+        
+        if len(AuthCache.groupsById) == 0:
+            AuthCache.getHMGroups()
+        groups_by_id = AuthCache.groupsById
+        
+        if not group_uuid is None:
+            if group_uuid in groups_by_id:
+                if not 'data_provider' in groups_by_id[group_uuid] or not groups_by_id[group_uuid]['data_provider']:
+                    raise HTTPException(f"Group {groups_by_id[group_uuid]['display_name']} is not a valid group for submitting data.", 403)
+                elif not group_uuid in user_info['hmgroupids']:
+                    raise HTTPException(f"User is not a member of the group {groups_by_id[group_uuid]['display_name']}", 403)
+                else:
+                    return group_uuid
+            else:
+                raise HTTPException("Invalid group_uuid", 400) 
+        else:
+            count = 0
+            found_group_uuid = None
+            for grp_id in groups_by_id.keys():
+                grp_info = groups_by_id['group_id']
+                if grp_id in user_info['hmgroupuuids'] and 'data_provider' in grp_info and grp_info['data_provider'] == True:
+                    count = count + 1
+                    found_group_uuid = grp_id
+            if count == 0:
+                raise HTTPException("User is not a member of any groups that can provide data.", 403)
+            elif count > 1:
+                raise HTTPException("The user is a member of multiple groups that can provide data.  Please specify which group in the group_uuid field", 400)
+            else:
+                return found_group_uuid
+                    
+                    
+            
+    
 class AuthCache:
     cache = {}
     userLock = threading.RLock()
@@ -332,6 +396,8 @@ class AuthCache:
                                          'displayname' : group['displayname'], 'generateuuid': group['generateuuid']}
                             if 'tmc_prefix' in group:
                                 group_obj['tmc_prefix'] = group['tmc_prefix']
+                            if 'data_provider' in group:
+                                group_obj['data_provider'] = group['data_provider']
                             groupIdByName[group['name'].lower().strip()] = group_obj
                             AuthCache.groupsById[group['uuid']] = group_obj
             return groupIdByName
@@ -469,6 +535,12 @@ class AuthCache:
             return Response("Login session not active.", 401)
 
 if __name__ == "__main__":
-    group_list = AuthCache.getHMGroups()
-    print(group_list)
+    #group_list = AuthCache.getHMGroups()
+    #print(group_list)
+    #print(AuthCache.groupsById)
+    clientId = ''
+    clientSecret = ''
+    token = ''
+    helper = AuthHelper.configured_instance(clientId, clientSecret)
+    print(helper.get_write_group_uuid(token, '5bd084c8-edc2-11e8-802f-0e368f3075e8'))
     
