@@ -344,8 +344,8 @@ class AuthHelper:
             count = 0
             found_group_uuid = None
             for grp_id in groups_by_id.keys():
-                grp_info = groups_by_id['group_id']
-                if grp_id in user_info['hmgroupuuids'] and 'data_provider' in grp_info and grp_info['data_provider'] == True:
+                grp_info = groups_by_id[grp_id]
+                if grp_id in user_info['hmgroupids'] and 'data_provider' in grp_info and grp_info['data_provider'] == True:
                     count = count + 1
                     found_group_uuid = grp_id
             if count == 0:
