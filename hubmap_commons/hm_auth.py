@@ -120,6 +120,16 @@ class AuthHelper:
     def getHuBMAPGroupInfo():
         return(AuthCache.getHMGroups())
     
+    @staticmethod
+    def getHMGroupsById():
+        return(AuthCache.getHMGroupsById())
+
+    @staticmethod
+    def getGroupDisplayName(group_uuid):
+        grps_by_id = AuthCache.getHMGroupsById()
+        if not group_uuid in grps_by_id: return None
+        return grps_by_id[group_uuid]['displayname']
+
     def __init__(self, clientId, clientSecret):
         global helperInstance
         if helperInstance is not None:
@@ -401,7 +411,13 @@ class AuthCache:
                             groupIdByName[group['name'].lower().strip()] = group_obj
                             AuthCache.groupsById[group['uuid']] = group_obj
             return groupIdByName
-
+    
+    @staticmethod
+    def getHMGroupsById():
+        if len(AuthCache.groupsById) == 0:
+            AuthCache.getHMGroups()
+        return(AuthCache.groupsById)
+    
     @staticmethod
     def getHMRoles():
         with AuthCache.groupLock:
