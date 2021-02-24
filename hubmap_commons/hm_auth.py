@@ -19,6 +19,8 @@ from hubmap_commons import exceptions
 TOKEN_EXPIRATION = 900 #15 minutes
 GLOBUS_GROUP_SCOPE = 'urn:globus:auth:scope:nexus.api.globus.org:groups'
 
+data_admin_group_uuid = '89a69625-99d7-11ea-9366-0e98982705c1'
+
 #this is only used by the secured decorator below as it needs access 
 #to client information.  It is initialized the first time an AuthHelper is
 #created.
@@ -344,7 +346,8 @@ class AuthHelper:
             if group_uuid in groups_by_id:
                 if not 'data_provider' in groups_by_id[group_uuid] or not groups_by_id[group_uuid]['data_provider']:
                     raise HTTPException(f"Group {groups_by_id[group_uuid]['display_name']} is not a valid group for submitting data.", 403)
-                elif not group_uuid in user_info['hmgroupids']:
+                #user must be a member of the group or a member of the data admin group
+                elif not group_uuid in user_info['hmgroupids'] or not data_admin_group_uuid in user_info['hmgroupids']:
                     raise HTTPException(f"User is not a member of the group {groups_by_id[group_uuid]['display_name']}", 403)
                 else:
                     return group_uuid
@@ -359,7 +362,10 @@ class AuthHelper:
                     count = count + 1
                     found_group_uuid = grp_id
             if count == 0:
-                raise HTTPException("User is not a member of any groups that can provide data.", 403)
+                if data_admin_group_uuid in user_info['hmgroupids']:
+                    raise HTTPException("User is not a member of any groups that can provide data, but is a member of the data admin group. Please specify which group in the group_uuid field")
+                else:
+                    raise HTTPException("User is not a member of any groups that can provide data.", 403)
             elif count > 1:
                 raise HTTPException("The user is a member of multiple groups that can provide data.  Please specify which group in the group_uuid field", 400)
             else:
