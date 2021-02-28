@@ -386,6 +386,7 @@ class AuthCache:
     groupJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-globus-groups.json'
     roleJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-globus-roles.json'
     procSecret = None
+    admin_groups = None
     processUserFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-process-user.json'
     processUser = None
          
@@ -488,9 +489,24 @@ class AuthCache:
         return rVal
 
     @staticmethod
+    def __get_admin_groups():
+        if AuthCache.admin_groups is None:
+            #start with hubmap-read group
+            admin_grps = ["5777527e-ec11-11e8-ab41-0af86edb4424"]
+            all_groups = AuthCache.getHMGroups()
+            #add all data provider groups
+            for grp_name in all_groups.keys():
+                grp = all_groups[grp_name]
+                if 'data_provider' in grp and grp['data_provider']:
+                    admin_grps.append(grp)
+            AuthCache.admin_groups = admin_grps
+        return AuthCache.admin_groups
+
+    @staticmethod
     def __userGroups(token):
         if token == AuthCache.procSecret:
-            return ["5777527e-ec11-11e8-ab41-0af86edb4424"]
+            return AuthCache.__get_admin_groups()
+
         getHeaders = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
