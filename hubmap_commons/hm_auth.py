@@ -101,7 +101,6 @@ class AuthHelper:
         else:
             return(AuthHelper.create(clientId, clientSecret))
 
-    
     @staticmethod
     def create(clientId, clientSecret):
         if helperInstance is not None:
@@ -132,6 +131,7 @@ class AuthHelper:
         if not group_uuid in grps_by_id: return None
         return grps_by_id[group_uuid]['displayname']
 
+
     def __init__(self, clientId, clientSecret):
         global helperInstance
         if helperInstance is not None:
@@ -145,7 +145,49 @@ class AuthHelper:
         AuthCache.setProcessSecret(re.sub(r'[^a-zA-Z0-9]', '', clientSecret))
         if helperInstance is None:
             helperInstance = self
+
+
+    #method to check if an auth token has write privileges
+    #for a given group
+    #
+    # inputs
+    #      nexus_token: a nexus_auth token
+    #       group_uuid: the group_uuid to check
+    #
+    # outputs
+    #     True if the token is authorized for the group
+    #
+    #   otherwise an HTTPException is thrown with the following status values
+    #
+    #     403 - user is not authorized to write for the group
+    #     401 - invalid token
+    #     400 - invalid group uuid provided
+    #
+    #   a standard Exception will be raise if an unexpected error occurs
+    #     500 - any unexpected exception
+    #
+    def check_write_privs(self, nexus_token, group_uuid):
+        user_info = self.getUserInfo(nexus_token, getGroups=True)
+        if isinstance(user_info, Response):
+            raise HTTPException(user_info.text, user_info.status_code)
         
+        groups_by_id = self.getHMGroupsById()
+        if not group_uuid in groups_by_id:
+            raise HTTPException(f"{group_uuid} is not a valid group uuid", 400)
+        grp = groups_by_id[group_uuid]
+        if not 'data_provider' in grp or not grp['data_provider']:
+            raise HTTPException(f"grop with uuid {group_uuid} is not a valid data provider group", 400)
+        
+        if 'hmgroupids' in user_info:
+            if data_admin_group_uuid in user_info['hmgroupids']:
+                return True
+            elif group_uuid not in user_info['hmgroupids']:
+                raise HTTPException("User not authorized for group.", 403)
+            else:
+                return True
+        else:
+            raise HTTPException("User is not authorized, no group membership", 403)
+    
     def getProcessSecret(self):
         return AuthCache.procSecret
 
