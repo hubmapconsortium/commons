@@ -371,7 +371,6 @@ class AuthHelper:
     #which can be easily handled to return a good error Response
     #for a web service method
     def get_write_group_uuid(self, request_or_token, group_uuid = None):
-        print(str(type(request_or_token)))
         if isinstance(request_or_token, str): 
             user_info = self.getUserInfo(request_or_token, getGroups=True)
         else:
@@ -387,10 +386,10 @@ class AuthHelper:
         if not group_uuid is None:
             if group_uuid in groups_by_id:
                 if not 'data_provider' in groups_by_id[group_uuid] or not groups_by_id[group_uuid]['data_provider']:
-                    raise HTTPException(f"Group {groups_by_id[group_uuid]['display_name']} is not a valid group for submitting data.", 403)
+                    raise HTTPException(f"Group {groups_by_id[group_uuid]['displayname']} is not a valid group for submitting data.", 403)
                 #user must be a member of the group or a member of the data admin group
-                elif not group_uuid in user_info['hmgroupids'] or not data_admin_group_uuid in user_info['hmgroupids']:
-                    raise HTTPException(f"User is not a member of the group {groups_by_id[group_uuid]['display_name']}", 403)
+                elif not (group_uuid in user_info['hmgroupids'] or data_admin_group_uuid in user_info['hmgroupids']):
+                    raise HTTPException(f"User is not a member of the group {groups_by_id[group_uuid]['displayname']}", 403)
                 else:
                     return group_uuid
             else:
