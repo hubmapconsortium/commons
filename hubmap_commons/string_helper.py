@@ -21,6 +21,13 @@ def getYesNo(msg):
         elif ans == "n":
             return False     
 
+def padLeadingZeros(int_val, n_chars_with_padding):
+    for n in range(1, n_chars_with_padding):
+        chk_val = int_val/10**n
+        if chk_val < 1:
+            return str(str('0') * (n_chars_with_padding - n)) + str(int_val)
+    return str(int_val)
+    
 def listToDelimited(lst, delimitChar = ", ", quoteChar = None, trimAndUpperCase = False):
     delimiter = ""
     rVal = ""
@@ -48,3 +55,5 @@ def listToCommaSeparated(lst, quoteChar = None, trimAndUpperCase = False):
 
 def allIndexes(value, character):
     return [i for i, ltr in enumerate(value) if ltr == character]
+
+

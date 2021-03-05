@@ -41,9 +41,9 @@ class Entity(object):
                 hmuuid_data = ug.getUUID(token, identifer)
                 if len(hmuuid_data) != 1:
                     raise ValueError("Could not find information for identifier " + identifer)
-                if 'hmuuid' not in hmuuid_data[0]:
+                if 'hm_uuid' not in hmuuid_data[0]:
                     raise ValueError("Could not find information for identifier " + identifer)
-                uuid_data.append(hmuuid_data[0]['hmuuid'])
+                uuid_data.append(hmuuid_data[0]['hm_uuid'])
         except:
             raise ValueError('Unable to resolve UUID for: ' + identifer)
         return uuid_data
@@ -683,7 +683,8 @@ class Entity(object):
                 for x in sys.exc_info():
                     print (x)
                 raise
-
+            
+    ''' unused method?
     @staticmethod
     def add_datafile_entity(self, driver, entity_uuid, activity_uuid, filepath, label): 
         # step 1: the filepath exists
@@ -739,7 +740,9 @@ class Entity(object):
                     print (x)
                 if tx.closed() == False:
                     tx.rollback()
+    '''
 
+    ''' unused method?
     @staticmethod
     #TODO: I could abstract this more with a signature like:
     #connect_entities(self, driver, orig_uuid, connected_uuid, relationship_activity_type_code)
@@ -783,6 +786,7 @@ class Entity(object):
                     print (x)
                 if tx.closed() == False:
                     tx.rollback()
+    '''
 
     @staticmethod
     def get_node_properties(driver, stmt, there_can_be_only_one=False): 

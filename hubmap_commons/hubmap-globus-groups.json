@@ -1,16 +1,18 @@
 [
   {
     "description": "Read access to HuBMAP data",
+    "data_provider": false,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "5777527e-ec11-11e8-ab41-0af86edb4424",
     "group_type": "regular",
     "name": "HuBMAP-Read",
-    "displayname": "HuBMAP-read",
+    "displayname": "HuBMAP Read",
     "generateuuid": false
   },
   {
     "description": "Access to HuBMAP protected data",
+    "data_provider": false,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "c0a18357-b036-11ea-96d3-0e2053f596b5",
@@ -21,16 +23,18 @@
   },
   {
     "description": "Users who can submit HuBMAP datasets",
+    "data_provider": false,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "89a69625-99d7-11ea-9366-0e98982705c1",
     "group_type": "regular",
     "name": "HuBMAP-Data-Admin",
-    "displayname": "HuBMAP-data-admin",
+    "displayname": "HuBMAP Data Admin",
     "generateuuid": false
   },
   {
     "description": "Users who have write access in the University of Florida directory",
+    "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "07a29e4c-ed43-11e8-b56a-0e8017bdda58",
@@ -42,6 +46,7 @@
   },
   {
     "description": "Users who have write access to the California Institute of Technology directory",
+    "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "308f5ffc-ed43-11e8-b56a-0e8017bdda58",
@@ -53,6 +58,7 @@
   },
   {
     "description": "Users who have write access to the Vanderbilt University directory",
+    "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "73bb26e4-ed43-11e8-8f19-0a7c1eab007a",
@@ -64,6 +70,7 @@
   },
   {
     "description": "Users who have write access to the Stanford University directory",
+    "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "def5fd76-ed43-11e8-b56a-0e8017bdda58",
@@ -75,6 +82,7 @@
   },
   {
     "description": "Users who have access to the University of California San Diego directory",
+    "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "03b3d854-ed44-11e8-8bce-0e368f3075e8",
@@ -86,6 +94,7 @@
   },
   {
     "description": "Users who have access to the Broad Institute RTI directory",
+    "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "9c4a56ca-79ac-11ea-8359-0e41da796b5d",
@@ -97,6 +106,7 @@
   },
   {
     "description": "Users who have access to the General Electric RTI directory",
+    "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "5c106f29-ea2d-11e9-85e8-0efb3ba9a670",
@@ -108,6 +118,7 @@
   },
   {
     "description": "Users who have access to the Northwestern RTI directory",
+    "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "76755cd8-79ad-11ea-8293-0a53601d30b5",
@@ -119,6 +130,7 @@
   },
   {
     "description": "Users who have access to the Stanford RTI directory",
+    "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "f5af3a5a-e93c-11e9-8559-0efb3ba9a670",
@@ -130,6 +142,7 @@
   },
   {
     "description": "Users who have access to the Cal Tech TTD directory",
+    "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "ab7db177-79ad-11ea-835a-0e41da796b5d",
@@ -141,6 +154,7 @@
   },
   {
     "description": "Users who have access to the Harvard TTD directory",
+    "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "ca46f893-79ad-11ea-b66c-0a990c2810ad",
@@ -152,6 +166,7 @@
   },
   {
     "description": "Users who have access to the Purdue TTD directory",
+    "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "eb5c5345-79ad-11ea-bc85-0ef992ed7ca1",
@@ -163,6 +178,7 @@
   },
   {
     "description": "Users who have access to the Stanford TTD directory",
+    "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "f677f31f-79b0-11ea-8295-0a53601d30b5",
@@ -174,16 +190,18 @@
   },
   {
     "description": "Users who have write access to all directories",
+    "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "2cf25858-ed44-11e8-991d-0e368f3075e8",
     "group_type": "regular",
     "name": "HuBMAP-All-Access",
-    "displayname": "HuBMAP-All-Access",
+    "displayname": "HuBMAP All Access",
     "generateuuid": true
   },
   {
     "description": "Users who have write access to the testing folder",
+    "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "5bd084c8-edc2-11e8-802f-0e368f3075e8",
