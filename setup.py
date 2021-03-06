@@ -15,23 +15,22 @@ setup(
     packages=['hubmap_commons'],
     package_data={'': ['*.json']},
     include_package_data=True,
-    install_requires=['pytz>=2019.1', 
-                      'property', 
-                      'mysql-connector-python>=8.0.16',
-                      'flask>=1.1.2', 
-                      'globus-sdk>=1.7.1', 
-                      'urllib3>=1.24.2', 
-                      'neo4j>=4.1.0',
-                      'jsonschema>=3.2.0',
-                      'requests>=2.22.0',
-                      'jsonref-ap==0.3.dev0',
-                      'cachetools==4.1.0',
-                      'PyYAML>=5.2'
-                      ],
+    install_requires=[
+        'requests>=2.25.1',
+        'cachetools>=4.2.1',
+        'Flask>=1.1.2',
+        'globus_sdk>=2.0.1',
+        'jsonref>=0.2',
+        'jsonschema>=3.2.0',
+        'neo4j>=4.2.1',
+        'prov>=2.0.0',
+        'pytz>=2021.1',
+        'PyYAML>=5.2'
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
+        "Operating System :: OS Independent"
     ],
     python_requires='>=3.6',
 )
