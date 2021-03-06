@@ -412,8 +412,52 @@ class AuthHelper:
             else:
                 return found_group_uuid
                     
-                    
-            
+    def get_user_groups_deprecated(self, token):
+        authcache = None
+        if AuthHelper.isInitialized() == False:
+            authcache = AuthHelper.create(
+                self.entity_config['APP_CLIENT_ID'], self.entity_config['APP_CLIENT_SECRET'])
+        else:
+            authcache = AuthHelper.instance()
+        userinfo = authcache.getUserInfo(token, True)
+    
+        if type(userinfo) == Response and userinfo.status_code == 401:
+            raise HTTPException('token is invalid.', 401)
+    
+        if 'hmgroupids' not in userinfo:
+            raise ValueError("Cannot find Hubmap Group information for token")
+        return_list = []
+        group_list = AuthCache.getHMGroups()
+        for group_uuid in userinfo['hmgroupids']:
+            for group_name in group_list.keys():
+                if group_list[group_name]['uuid'] == group_uuid:
+                    return_list.append(group_list[group_name])
+                    break
+        return return_list
+
+    def get_user_roles_deprecated(self, token):
+        authcache = None
+        if AuthHelper.isInitialized() == False:
+            authcache = AuthHelper.create(
+                self.entity_config['APP_CLIENT_ID'], self.entity_config['APP_CLIENT_SECRET'])
+        else:
+            authcache = AuthHelper.instance()
+        userinfo = authcache.getUserInfo(token, True)
+
+        if type(userinfo) == Response and userinfo.status_code == 401:
+            raise HTTPException('token is invalid.', 401)
+
+        if 'hmgroupids' not in userinfo:
+            raise ValueError("Cannot find Hubmap Group information for token")
+        return_list = []
+        role_list = AuthCache.getHMRoles()
+        for role_uuid in userinfo['hmroleids']:
+            for role_name in role_list.keys():
+                if role_list[role_name]['uuid'] == role_uuid:
+                    return_list.append(role_list[role_name])
+                    break
+        return return_list
+ 
     
 class AuthCache:
     cache = {}
