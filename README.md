@@ -3,23 +3,27 @@ This repository contains the code supporting several HuBMAP restful microservice
 
 The code includes:
 
-* **activity.py** creates Cyhper statements for creating and getting HuBMAP Activitiy node types
+* **~~activity.py~~ (deprecated)** creates Cyhper statements for creating and getting HuBMAP Activitiy node types
 
 * **autherror.py** a class to handle authentiation errors
 
-* **entity.py** a base class that executes many Cypher queries against Neo4j to return information about the HuBMAP Entity nodes
+* **~~entity.py~~(deprecated)** a base class that executes many Cypher queries against Neo4j to return information about the HuBMAP Entity nodes
 
 * **file_helper.py** contains methods to execute files and parse files
 
 * **globus_file_helper.py** contains methods for creating Globus directories
 
+* **globus_groups.py** loads the huBMAP globus groups information json file and faciliates the retrival by group id, group name, and TMC prefix
+
 * **hm_auth.py** contains several methods and classes relating to system security
 
 * **hubmap_const.py** a file that maintains the names and strings used in the code and the Neo4j system
 
-* **neo4j_connection.py** provides connections to Neo4j and some generic Cypher statements (e.g. CREATE and UPDATE)
+* **~~neo4j_connection.py~~(deprecated)** provides connections to Neo4j and some generic Cypher statements (e.g. CREATE and UPDATE)
 
-* **provenance.py** extracts provenance related information from a token
+* **neo4j_driver.py** creates a neo4j.Driver singleton instance
+
+* **~~provenance.py~~(deprecated)** extracts provenance related information from a token
 
 * **schema_tools.py** checks a JSON structure vs a schema definition using two main methods. 
 
