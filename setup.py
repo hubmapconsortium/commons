@@ -16,7 +16,6 @@ setup(
     package_data={'': ['*.json']},
     include_package_data=True,
     install_requires=[
-        'requests>=2.25.1',
         'cachetools>=4.2.1',
         'Flask>=1.1.2',
         'globus_sdk>=2.0.1',
@@ -25,7 +24,10 @@ setup(
         'neo4j>=4.2.1',
         'prov>=2.0.0',
         'pytz>=2021.1',
-        'PyYAML>=5.2'
+        # It's an agreement with other collaborators to use the beblow versions
+        # for requests and PyYAML
+        'requests>=2.22.0',
+        'PyYAML>=5.3.1'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
