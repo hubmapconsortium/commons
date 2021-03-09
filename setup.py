@@ -5,27 +5,34 @@ with open("README.md", "r") as fh:
 
 setup(
     name="hubmap-commons",
-    version="1.12.7",
-    author="Chuck Borromeo",
-    author_email="chb69@pitt.edu",
-    description="The common tools required by the HuMBAP web services",
+    version="2.0.0",
+    author="Bill Shirey",
+    author_email="shirey@pitt.edu",
+    description="The common utilities used by the HuMBAP web services",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/hubmapconsortium/commons",
     packages=['hubmap_commons'],
     package_data={'': ['*.json']},
     include_package_data=True,
-    install_requires=['prov', 'pytz', 'flask_cors', 'property', 'mysql-connector-python',
-                      'flask', 'globus-sdk', 'urllib3', 'neo4j==1.7.2',
-                      'jsonschema==3.2.0',
-                      'requests==2.22.0',
-                      'jsonref-ap==0.3.dev0',
-                      'PyYAML==5.3.1'
-                      ],
+    install_requires=[
+        'cachetools>=4.2.1',
+        'Flask>=1.1.2',
+        'globus_sdk>=2.0.1',
+        'jsonref>=0.2',
+        'jsonschema>=3.2.0',
+        'neo4j>=4.2.1',
+        'prov>=2.0.0',
+        'pytz>=2021.1',
+        # It's an agreement with other collaborators to use the beblow versions
+        # for requests and PyYAML
+        'requests>=2.22.0',
+        'PyYAML>=5.3.1'
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
+        "Operating System :: OS Independent"
     ],
     python_requires='>=3.6',
 )

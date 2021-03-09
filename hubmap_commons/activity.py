@@ -62,7 +62,7 @@ class Activity:
     
         stmt = Activity.get_create_activity_metadata_statement(activity_metadata_record, activity_metadata_uuid_record, activity_uuid_record, metadata_userinfo, provenance_group)
         stmt_list.append(stmt)
-        stmt = Neo4jConnection.create_relationship_statement(ret_object['activity_uuid'][HubmapConst.UUID_ATTRIBUTE], HubmapConst.HAS_METADATA_REL, ret_object['activity_metadata_uuid'][HubmapConst.UUID_ATTRIBUTE])
+        stmt = Neo4jConnection.create_relationship_statement(ret_object['activity_uuid']['hm_uuid'], HubmapConst.HAS_METADATA_REL, ret_object['activity_metadata_uuid']['hm_uuid'])
         stmt_list.append(stmt)
         for inputUUID in inputUUID_list:
             stmt = Neo4jConnection.create_relationship_statement(inputUUID, HubmapConst.ACTIVITY_INPUT_REL, ret_object['activity_uuid'][HubmapConst.UUID_ATTRIBUTE])
