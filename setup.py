@@ -24,6 +24,7 @@ setup(
         'neo4j>=4.2.1',
         'prov>=2.0.0',
         'pytz>=2021.1',
+        'property>=2.2',
         # It's an agreement with other collaborators to use the beblow versions
         # for requests and PyYAML
         'requests>=2.22.0',
