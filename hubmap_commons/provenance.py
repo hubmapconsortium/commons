@@ -3,7 +3,7 @@ Created on Sep 1, 2019
 
 @author: chb69
 '''
-from neo4j import TransactionError, CypherError
+#from neo4j import TransactionError, CypherError
 from hubmap_commons import string_helper, file_helper
 import os
 import sys
@@ -419,11 +419,8 @@ class Provenance:
             except ValueError as ve:
                 print('A value error occurred: ', ve.value)
                 raise ve
-            except CypherError as cse:
-                print('A Cypher error was encountered: ', cse.message)
-                raise cse
-            except:
-                print('A general error occurred: ')
+            except Exception as e:
+                print('An exception occurred in get_provenance_history: ' + str(e))
                 traceback.print_exc()
 
     @staticmethod

@@ -4,7 +4,7 @@ import sys
 import os
 from hubmap_commons.hubmap_const import HubmapConst 
 from pprint import pprint 
-from neo4j import TransactionError, CypherError
+#from neo4j import TransactionError, CypherError
 
 
 
@@ -193,12 +193,8 @@ class Neo4jConnection(object):
                 tx.close()
                 print("check_connection passed")
                 return True
-            except TransactionError as te:
-                print('A transaction error occurred: ', te.value)
-            except CypherError as cse:
-                print('A Cypher error was encountered: ', cse.message)
-            except:
-                print('A general error occurred: ')
+            except Exception as e:
+                print('An exception occured while checking a connection: ' + str(e))
                 for x in sys.exc_info():
                     print(x)
 
@@ -212,16 +208,8 @@ def build_indices(driver):
             for l in fl:
                 tx.run(l)
             tx.commit()
-        except TransactionError as te:
-            print('A transaction error occurred: ', te.value)
-            if tx.closed() == False:
-                tx.rollback()
-        except CypherError as cse:
-            print('A Cypher error was encountered: ', cse.message)
-            if tx.closed() == False:
-                tx.rollback()
-        except:
-            print('A general error occurred: ')
+        except Exception as e:
+            print('An expeption occured while building indices: ' + str(e))
             for x in sys.exc_info():
                 print(x)
             if tx.closed() == False:
