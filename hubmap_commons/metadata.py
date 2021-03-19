@@ -3,7 +3,7 @@ Created on May 15, 2019
 
 @author: chb69
 '''
-from neo4j import TransactionError, CypherError
+#from neo4j.exceptions import TransactionError, CypherError
 import json
 import sys
 import os
@@ -60,11 +60,8 @@ class Metadata(object):
                     dataset_record = record['properties']
                     return_list.append(dataset_record)
                 return return_list                    
-            except CypherError as cse:
-                print ('A Cypher error was encountered: '+ cse.message)
-                raise
-            except:
-                print ('A general error occurred: ')
+            except Exception as e:
+                print ('An exception occurred in get_metadata_by_source_type: ' + str(e))
                 for x in sys.exc_info():
                     print (x)
                 raise
