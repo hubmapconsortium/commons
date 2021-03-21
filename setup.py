@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="hubmap-commons",
-    version="2.0.1",
+    version="2.0.2",
     author="Bill Shirey",
     author_email="shirey@pitt.edu",
     description="The common utilities used by the HuMBAP web services",
@@ -22,7 +22,9 @@ setup(
         'jsonref>=0.2',
         'jsonschema>=3.2.0',
         'neo4j>=4.2.1',
-        'prov>=2.0.0',
+        # cwltool uses prov==1.5.1
+        # Will remove provenance.py and this prov dependency later
+        'prov>=1.5.1',
         'pytz>=2021.1',
         'property>=2.2',
         # It's an agreement with other collaborators to use the beblow versions
