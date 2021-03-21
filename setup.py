@@ -18,7 +18,8 @@ setup(
     install_requires=[
         'cachetools>=4.2.1',
         'Flask>=1.1.2',
-        'globus_sdk>=2.0.1',
+        # Airflow dependes on globus_sdk==1.9.0
+        'globus_sdk>=1.9.0',
         'jsonref>=0.2',
         'jsonschema>=3.2.0',
         'neo4j>=4.2.1',
