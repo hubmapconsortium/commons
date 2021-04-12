@@ -30,4 +30,4 @@ def check_hm_ws(service_url):
         else:
             return elapsed_time_millis
 
-print(str(check_hm_ws('https://uuid-api.refactor.hubmapconsortium.org/status/')))
+#print(str(check_hm_ws('https://uuid-api.refactor.hubmapconsortium.org/status/')))
