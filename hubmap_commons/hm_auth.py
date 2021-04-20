@@ -577,7 +577,7 @@ class AuthCache:
     def __get_admin_groups():
         if AuthCache.admin_groups is None:
             #start with hubmap-read group
-            admin_grps = ["5777527e-ec11-11e8-ab41-0af86edb4424"]
+            admin_grps = ["5777527e-ec11-11e8-ab41-0af86edb4424", data_admin_group_uuid]
             all_groups = AuthCache.getHMGroups()
             #add all data provider groups
             for grp_name in all_groups.keys():
