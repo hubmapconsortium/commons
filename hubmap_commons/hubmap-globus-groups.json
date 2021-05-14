@@ -33,6 +33,17 @@
     "generateuuid": false
   },
   {
+    "description": "This group includes the HuBMAP user that can manage the data curator process related to datasets.",
+    "data_provider": false,
+    "has_subgroups": false,
+    "identity_set_properties": null,      
+    "uuid": "75804b96-d4a8-11e9-9da9-0ad4acb67ed4",
+    "group_type": "regular",
+    "name": "HuBMAP-Data-Curator",
+    "displayname": "HuBMAP Data Curator",
+    "generateuuid": false
+  },
+  {
     "description": "Users who have write access in the University of Florida directory",
     "data_provider": true,
     "has_subgroups": false,
