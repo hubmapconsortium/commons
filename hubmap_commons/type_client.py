@@ -26,30 +26,35 @@ salmon_rnaseq_bulk:
 #    alt-names: [salmon_rnaseq_bulk]
     alt-names: []
     primary: false
+    contains_pii: false
     vitessce-hints: []
 
 CODEX:
     description: CODEX
     alt-names: []
     primary: true
+    contains_pii: false
     vitessce-hints: []
 
 codex_cytokit:
     description: CODEX [Cytokit + SPRM]
     alt-names: []
     primary: false
+    contains_pii: false
     vitessce-hints: ['codex', 'is_image', 'is_tiled']
 
 image_pyramid:
     description: Image Pyramid
     alt-names: []
     primary: false
+    contains_pii: false
     vitessce-hints: ['is_image', 'pyramid']
 
 SNAREseq:
     description: SNARE-seq
     alt-names: []
     primary: true
+    contains_pii: true
     vitessce-hints: []
 
 sc_atac_seq_snare_lab:
@@ -66,30 +71,35 @@ sc_atac_seq_snare:
 #    alt-names: [sc_atac_seq_snare]
     alt-names: []
     primary: false
+    contains_pii: false
     vitessce-hints: ['is_sc', 'atac']
 
 scRNA-Seq-10x:
     description: scRNA-seq (10x Genomics)
     alt-names: []
     primary: true
+    contains_pii: true
     vitessce-hints: []
 
 scRNA-Seq-10x_salmon:
     description: scRNA-seq (10x Genomics) [Salmon]
     alt-names: [salmon_rnaseq_10x]
     primary: false
+    contains_pii: false
     vitessce-hints: ['is_sc', 'rna']
 
 PAS:
     description: PAS Stained Microscopy
     alt-names: []
     primary: true
+    contains_pii: false
     vitessce-hints: []
 
 PAS_pyramid:
     description: PAS Stained Microscopy [Image Pyramid]
     alt-names: [["PAS", "Image Pyramid"], ["Image Pyramid", "PAS"]]
     primary: false
+    contains_pii: false
     vitessce-hints: ['is_image', 'pyramid']
 
 """
@@ -116,6 +126,9 @@ class _AssayType(object):
         self.vitessce_hints = (info['vitessce-hints']
                                if 'vitessce-hints' in info
                                else [])
+        self.contains_pii = (info['contains_pii']
+                             if 'contains_pii' in info
+                             else True)  # Fail to True for safety
 
     def to_json(self) -> Dict[str, Any]:
         """
@@ -123,7 +136,8 @@ class _AssayType(object):
         """
         return {'name': self.name, 'primary': self.primary,
                 'description': self.description,
-                'vitessce-hints': self.vitessce_hints}
+                'vitessce-hints': self.vitessce_hints,
+                'contains_pii': self.contains_pii}
 
     def __str__(self) -> str:
         return(f'AssayType({self.description})')
