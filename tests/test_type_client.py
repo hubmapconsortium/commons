@@ -87,16 +87,36 @@ class TestTypeClientUninitialized(unittest.TestCase):
             tc = TypeClient()
         except RuntimeError:
             tc = TypeClient(self.config['typeserviceurl'])
-        cases = [('codex', False, None, 'should be uppercase'),
-                 ('CODEX', True, True, 'this one is valid'),
-                 ('codex_cytokit', True, False, 'this one is valid'),
-                 ('salmon_rnaseq_bulk', True, False, 'this is an alt-name'),
-                 # (['PAS', 'Image Pyramid'], True, False, 'complex alt-name'),
-                 # (['IMC', 'foo'], False, False, 'invalid complex name')
+        cases = [('codex',
+                  False, None, None, None,
+                  'should be uppercase'),
+                 ('CODEX',
+                  True, True, False, False,
+                  'this one is valid'),
+                 ('codex_cytokit',
+                  True, False, False, False,
+                  'this one is valid'),
+                 ('salmon_rnaseq_bulk',
+                  True, False, False, False,
+                  'this is an alt-name'),
+                 ('scRNA-Seq-10x',
+                  True, True, True, False,
+                  'this is a valid name containing pii'),
+                 (['PAS', 'Image Pyramid'],
+                  True, False, False, True,
+                  'complex alt-name'),
+                 (['Image Pyramid', 'PAS'],
+                  True, False, False, True,
+                  'complex alt-name'),
+                 (['IMC', 'foo'],
+                  False, None, None, None,
+                  'invalid complex name')
                  ]
-        for name, valid, is_primary, note in cases:
+        for name, valid, is_primary, contains_pii, vis_only, note in cases:
             if valid:
-                tc.getAssayType(name)
+                a_t = tc.getAssayType(name)
+                self.assertTrue(contains_pii == a_t.contains_pii)
+                self.assertTrue(vis_only == a_t.vis_only)
             else:
                 print('This is an expected failure...')
                 with self.assertRaises(Exception):
