@@ -53,25 +53,41 @@ image_pyramid:
     vis-only: true
     vitessce-hints: ['is_image', 'pyramid']
 
-SNAREseq:
-    description: SNARE-seq
-    alt-names: []
+SNARE-ATACseq2:
+    description: snATACseq (SNARE-seq2)
+    alt-names: ['SNAREseq', 'SNARE2-ATACseq']
+    primary: true
+    contains-pii: true
+    vitessce-hints: []
+
+SNARE-RNAseq2:
+    description: snRNAseq (SNARE-seq2)
+    alt-names: ['SNARE2-RNAseq']
     primary: true
     contains-pii: true
     vitessce-hints: []
 
 sc_atac_seq_snare_lab:
-#SNAREseq_lab:
-    description: scATAC-seq (SNARE-seq) [Lab Processed]
-#    alt-names: [sc_atac_seq_snare_lab]
+    description: snATAC-seq (SNARE-seq2) [Lab Processed]
     alt-names: []
     primary: false
     vitessce-hints: []
 
+sc_rna_seq_snare_lab:
+    description: snRNA-seq (SNARE-seq2) [Lab Processed]
+    alt-names: []
+    primary: false
+    vitessce-hints: []
+
+salmon_rnaseq_snareseq:
+    description: snRNA-seq (SNARE-seq2) [Salmon]
+    alt-names: []
+    primary: false
+    contains-pii: false
+    vitessce-hints: ['is_sc', 'rna']
+
 sc_atac_seq_snare:
-#SNAREseq_snapATAC:
-    description: scATAC-seq (SNARE-seq) [SnapATAC]
-#    alt-names: [sc_atac_seq_snare]
+    description: snATAC-seq (SNARE-seq2) [SnapATAC]
     alt-names: []
     primary: false
     contains-pii: false
