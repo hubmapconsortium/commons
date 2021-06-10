@@ -144,15 +144,11 @@ class _AssayType(object):
         self.name = info['name']
         self.description = info['description']
         self.primary = info['primary']
-        self.vitessce_hints = (info['vitessce-hints']
-                               if 'vitessce-hints' in info
-                               else [])
-        self.contains_pii = (info['contains-pii']
-                             if 'contains-pii' in info
-                             else True)  # Fail to True for safety
-        self.vis_only = (info['vis-only']
-                         if 'vis-only' in info
-                         else False)  # False is more common
+        self.vitessce_hints = info.get('vitessce-hints', [])
+        self.contains_pii = info.get('contains-pii',
+                                     True) # Fail True for safety
+        self.vis_only = info.get('vis-only',
+                                 False)  # False is more common
 
     def to_json(self) -> Dict[str, Any]:
         """
