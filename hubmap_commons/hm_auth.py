@@ -500,6 +500,8 @@ class AuthCache:
                                 group_obj['tmc_prefix'] = group['tmc_prefix']
                             if 'data_provider' in group:
                                 group_obj['data_provider'] = group['data_provider']
+                            if 'shortname' in group:
+                                group_obj['shortname'] = group['shortname']
                             groupIdByName[group['name'].lower().strip()] = group_obj
                             AuthCache.groupsById[group['uuid']] = group_obj
             return groupIdByName
