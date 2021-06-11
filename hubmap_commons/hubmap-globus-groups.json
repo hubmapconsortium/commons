@@ -154,7 +154,7 @@
     "uuid": "69cb89c4-c870-11eb-b360-4dfdb5d10392",
     "group_type": "regular",
     "name": "HuBMAP-UPENN-TMC",
-    "displayname": "TMC - University of Pennsylvania ",
+    "displayname": "TMC - University of Pennsylvania",
     "shortname": "TMC - UPenn",
     "generateuuid": true,
     "tmc_prefix": "UPENN"
