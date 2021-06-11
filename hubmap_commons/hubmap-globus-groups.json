@@ -287,7 +287,7 @@
     "displayname": "TTD - Penn State University and Columbia University",
     "shortname": "TTD - PSU & CU",
     "generateuuid": true,
-    "tmc_prefix": "PSCCU"
+    "tmc_prefix": "PSUCU"
   },
   {
     "description": "Users who have access to the Purdue TTD directory",
