@@ -128,7 +128,7 @@
     "uuid": "03b3d854-ed44-11e8-8bce-0e368f3075e8",
     "group_type": "regular",
     "name": "HuBMAP-UCSD-TMC",
-    "displayname": "University of California San Diego TMC focusing on kidney",
+    "displayname": "University of California San Diego TMC",
     "shortname": "TMC - UCSD (Kidney)",
     "generateuuid": true,
     "tmc_prefix": "UCSD"
