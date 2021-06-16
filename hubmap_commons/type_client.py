@@ -147,7 +147,7 @@ class _AssayType(object):
         self.contains_pii = info.get('contains-pii',
                                      True) # Fail True for safety
         self.vis_only = info.get('vis-only',
-                                 False)  # False is more common
+                                 False)  # False is more common.
 
     def to_json(self) -> Dict[str, Any]:
         """
