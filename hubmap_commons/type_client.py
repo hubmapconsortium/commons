@@ -345,7 +345,7 @@ class DummyTypeClient(object, metaclass=SingletonMetaClass):
         else:
             raise RuntimeError(
                 f'No such assay_type {name}, even as alternate name')
-        return _AssayType(self.examples[safe_name])
+        return _AssayType(self.examples[type_name])
 
     def iterAssayNames(self, primary: BoolOrNone = None) -> Iterable[str]:
         """
