@@ -338,12 +338,13 @@ class DummyTypeClient(object, metaclass=SingletonMetaClass):
         name.
         """
         safe_name = name if isinstance(name, str) else tuple(name)
-        if safe_name not in self.examples:
-            if safe_name in self.alt_name_map:
-                safe_name = self.alt_name_map[safe_name]
-            else:
-                raise RuntimeError(f'No such assay_type {name},'
-                                   ' even as alternate name')
+        if safe_name in self.examples:
+            type_name = safe_name
+        elif safe_name in self.alt_name_map:
+            type_name = self.alt_name_map[safe_name]
+        else:
+            raise RuntimeError(
+                f'No such assay_type {name}, even as alternate name')
         return _AssayType(self.examples[safe_name])
 
     def iterAssayNames(self, primary: BoolOrNone = None) -> Iterable[str]:
