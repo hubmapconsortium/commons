@@ -140,7 +140,6 @@ class _AssayType(object):
         The dict must match the format produced by self.to_json().
         """
         # Needs to set self.name, self.description, self.primary
-        #pprint(info)
         self.name = info['name']
         self.description = info['description']
         self.primary = info['primary']
