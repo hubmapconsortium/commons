@@ -7,7 +7,7 @@ Created on November 22, 2020
 import requests
 import json
 import yaml
-from typing import Union, List, Iterable, Dict, Any
+from typing import Union, List, Iterable, Dict, Any, TypeVar
 from requests.exceptions import TooManyRedirects
 from pprint import pprint
 from .singleton_metaclass import SingletonMetaClass
@@ -15,6 +15,8 @@ from .singleton_metaclass import SingletonMetaClass
 BoolOrNone = Union[bool, None]
 
 StringOrNone = Union[str, None]
+
+StrOrListStr = TypeVar('StrOrListStr', str, List[str])
 
 JSONType = Union[str, int, float, bool, None, Dict[str, Any], List[Any]]
 
@@ -26,70 +28,98 @@ salmon_rnaseq_bulk:
 #    alt-names: [salmon_rnaseq_bulk]
     alt-names: []
     primary: false
+    contains-pii: false
     vitessce-hints: []
 
 CODEX:
     description: CODEX
     alt-names: []
     primary: true
+    contains-pii: false
     vitessce-hints: []
 
 codex_cytokit:
     description: CODEX [Cytokit + SPRM]
     alt-names: []
     primary: false
+    contains-pii: false
     vitessce-hints: ['codex', 'is_image', 'is_tiled']
 
 image_pyramid:
     description: Image Pyramid
     alt-names: []
     primary: false
+    contains_pii: false
+    vis-only: true
     vitessce-hints: ['is_image', 'pyramid']
 
-SNAREseq:
-    description: SNARE-seq
-    alt-names: []
+SNARE-ATACseq2:
+    description: snATACseq (SNARE-seq2)
+    alt-names: ['SNAREseq', 'SNARE2-ATACseq']
     primary: true
+    contains-pii: true
+    vitessce-hints: []
+
+SNARE-RNAseq2:
+    description: snRNAseq (SNARE-seq2)
+    alt-names: ['SNARE2-RNAseq']
+    primary: true
+    contains-pii: true
     vitessce-hints: []
 
 sc_atac_seq_snare_lab:
-#SNAREseq_lab:
-    description: scATAC-seq (SNARE-seq) [Lab Processed]
-#    alt-names: [sc_atac_seq_snare_lab]
+    description: snATAC-seq (SNARE-seq2) [Lab Processed]
     alt-names: []
     primary: false
     vitessce-hints: []
 
-sc_atac_seq_snare:
-#SNAREseq_snapATAC:
-    description: scATAC-seq (SNARE-seq) [SnapATAC]
-#    alt-names: [sc_atac_seq_snare]
+sc_rna_seq_snare_lab:
+    description: snRNA-seq (SNARE-seq2) [Lab Processed]
     alt-names: []
     primary: false
+    vitessce-hints: []
+
+salmon_rnaseq_snareseq:
+    description: snRNA-seq (SNARE-seq2) [Salmon]
+    alt-names: []
+    primary: false
+    contains-pii: false
+    vitessce-hints: ['is_sc', 'rna']
+
+sc_atac_seq_snare:
+    description: snATAC-seq (SNARE-seq2) [SnapATAC]
+    alt-names: []
+    primary: false
+    contains-pii: false
     vitessce-hints: ['is_sc', 'atac']
 
 scRNA-Seq-10x:
     description: scRNA-seq (10x Genomics)
     alt-names: []
     primary: true
+    contains-pii: true
     vitessce-hints: []
 
 scRNA-Seq-10x_salmon:
     description: scRNA-seq (10x Genomics) [Salmon]
     alt-names: [salmon_rnaseq_10x]
     primary: false
+    contains-pii: false
     vitessce-hints: ['is_sc', 'rna']
 
 PAS:
     description: PAS Stained Microscopy
     alt-names: []
     primary: true
+    contains-pii: false
     vitessce-hints: []
 
 PAS_pyramid:
     description: PAS Stained Microscopy [Image Pyramid]
     alt-names: [["PAS", "Image Pyramid"], ["Image Pyramid", "PAS"]]
     primary: false
+    contains-pii: false
+    vis-only: true
     vitessce-hints: ['is_image', 'pyramid']
 
 """
@@ -113,9 +143,11 @@ class _AssayType(object):
         self.name = info['name']
         self.description = info['description']
         self.primary = info['primary']
-        self.vitessce_hints = (info['vitessce-hints']
-                               if 'vitessce-hints' in info
-                               else [])
+        self.vitessce_hints = info.get('vitessce-hints', [])
+        self.contains_pii = info.get('contains-pii',
+                                     True) # Fail True for safety
+        self.vis_only = info.get('vis-only',
+                                 False)  # False is more common.
 
     def to_json(self) -> Dict[str, Any]:
         """
@@ -123,7 +155,9 @@ class _AssayType(object):
         """
         return {'name': self.name, 'primary': self.primary,
                 'description': self.description,
-                'vitessce-hints': self.vitessce_hints}
+                'vitessce-hints': self.vitessce_hints,
+                'contains-pii': self.contains_pii,
+                'vis-only': self.vis_only}
 
     def __str__(self) -> str:
         return(f'AssayType({self.description})')
@@ -203,7 +237,7 @@ class TypeClient(object, metaclass=SingletonMetaClass):
             pprint(e)
             raise e
 
-    def getAssayType(self, name: str) -> _AssayType:
+    def getAssayType(self, name: StrOrListStr) -> _AssayType:
         """
         Given an assay name, return the associated assay type.  If a deprecated
         alt-name is provided, the returned assay type will use the up-to-date
@@ -297,19 +331,21 @@ class DummyTypeClient(object, metaclass=SingletonMetaClass):
                     map[safe_nm] = k
             self.alt_name_map = map
 
-    def getAssayType(self, name: str) -> _AssayType:
+    def getAssayType(self, name: StrOrListStr) -> _AssayType:
         """
         Given an assay name, return the associated assay type.  If a deprecated
         alt-name is provided, the returned assay type will use the up-to-date
         name.
         """
-        if name not in self.examples:
-            if name in self.alt_name_map:
-                name = self.alt_name_map[name]
-            else:
-                raise RuntimeError(f'No such assay_type {name},'
-                                   ' even as alternate name')
-        return _AssayType(self.examples[name])
+        safe_name = name if isinstance(name, str) else tuple(name)
+        if safe_name in self.examples:
+            type_name = safe_name
+        elif safe_name in self.alt_name_map:
+            type_name = self.alt_name_map[safe_name]
+        else:
+            raise RuntimeError(
+                f'No such assay_type {name}, even as alternate name')
+        return _AssayType(self.examples[type_name])
 
     def iterAssayNames(self, primary: BoolOrNone = None) -> Iterable[str]:
         """
