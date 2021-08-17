@@ -637,11 +637,13 @@ class AuthCache:
             return Response("Unable to get user groups\n"+response.text, 500)
         try:
             jsonResp = response.json()
+#            print(json.dumps(jsonResp, indent=4))
             ids = []
 #            if 'my_memberships' in jsonResp and isinstance(jsonResp['my_memberships'], list):
             for grp in jsonResp:
                 if 'id' in grp:
-                    ids.append(grp['id'])            
+                    ids.append(grp['id'])
+                                
             return ids
         except Exception as e:
             return Response("unable to get groups from Groups api while gathering user groups\n" + str(e), 500)
@@ -677,10 +679,12 @@ class AuthCache:
                     grp_list = []
                     role_list = []
                     for group_uuid in groups:
-                        if group_uuid in AuthCache.groupsById:
+                        #if group_uuid in AuthCache.groupsById:
+                        #    grp_list.append(group_uuid)
+                        #elif group_uuid in AuthCache.rolesById:
+                        #    role_list.append(group_uuid)
+                        if not group_uuid in grp_list:
                             grp_list.append(group_uuid)
-                        elif group_uuid in AuthCache.rolesById:
-                            role_list.append(group_uuid)
                     jsonResp['hmgroupids'] = grp_list
                     jsonResp['group_membership_ids'] = grp_list
                     jsonResp['hmroleids'] = role_list
