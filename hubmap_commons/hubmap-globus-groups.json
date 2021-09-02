@@ -42,7 +42,19 @@
     "name": "HuBMAP-Data-Curator",
     "displayname": "HuBMAP Data Curator",
     "generateuuid": false
-  },  {
+  },
+  {
+    "description": "This group includes the HuBMAP user that can log into the Airflow pipeline manager",
+    "data_provider": false,
+    "has_subgroups": false,
+    "identity_set_properties": null,      
+    "uuid": "2a88e3ce-04e6-11ec-8a77-d71f8cc57c67",
+    "group_type": "regular",
+    "name": "HuBMAP-Airflow",
+    "displayname": "HuBMAP Airflow",
+    "generateuuid": false
+  },
+  {
     "description": "Users who have write access to the California Institute of Technology directory",
     "data_provider": true,
     "has_subgroups": false,
