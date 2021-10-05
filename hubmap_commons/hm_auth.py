@@ -275,10 +275,12 @@ class AuthHelper:
             return tokenResp;
 
         if isinstance(tokenResp, dict):
-            if getGroups and not 'nexus_token' in tokenResp:
+            if getGroups and not ('nexus_token' in tokenResp or 'groups_token' in tokenResp):
                 return Response("Nexus token required to get group information.")
             elif 'nexus_token' in tokenResp:
                 return self.getUserInfo(tokenResp['nexus_token'], getGroups)
+            elif 'groups_token' in tokenResp:
+                return self.getUserInfo(tokenResp['groups_token'], getGroups)
             elif 'auth_token' in tokenResp:
                 return self.getUserInfo(tokenResp['auth_token'], getGroups)
             elif 'transfer_token' in tokenResp:
@@ -589,8 +591,18 @@ class AuthCache:
             AuthCache.admin_groups = admin_grps
         return AuthCache.admin_groups
 
+    #try to get user's group info via both deprecated Nexus token and new Groups API token
     @staticmethod
-    def __userGroups(token):
+    def __userGroupsComb(token):
+        groups = AuthCache.__userGroupsNexus(token)
+        if isinstance(groups, Response):
+            #if the nexus call failed try the Groups API
+            groups = AuthCache.__get_user_groups_via_groups_api(token)
+        return groups
+
+
+    @staticmethod
+    def __userGroupsNexus(token):
         if token == AuthCache.procSecret:
             return AuthCache.__get_admin_groups()
 
@@ -612,6 +624,29 @@ class AuthCache:
             return ids
         except Exception as e:
             return Response('Unable to parse json response while gathering user groups\n' + str(e), 500)
+
+    @staticmethod
+    def __get_user_groups_via_groups_api(token):
+        if token == AuthCache.procSecret:
+            return AuthCache.__get_admin_groups()
+        #GET /v2/groups/my_groups
+        url = 'https://groups.api.globus.org/v2/groups/my_groups'
+        headers = { 'Authorization' : 'Bearer ' + token }
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            return Response("Unable to get user groups\n"+response.text, 500)
+        try:
+            jsonResp = response.json()
+#            print(json.dumps(jsonResp, indent=4))
+            ids = []
+#            if 'my_memberships' in jsonResp and isinstance(jsonResp['my_memberships'], list):
+            for grp in jsonResp:
+                if 'id' in grp:
+                    ids.append(grp['id'])
+                                
+            return ids
+        except Exception as e:
+            return Response("unable to get groups from Groups api while gathering user groups\n" + str(e), 500)
 
     @staticmethod
     def __userInfo(applicationKey, authToken, getGroups=False):
@@ -638,17 +673,20 @@ class AuthCache:
                         AuthCache.getHMGroups()
                     if len(AuthCache.rolesById) == 0:
                         AuthCache.getHMRoles()
-                    groups = AuthCache.__userGroups(authToken)
+                    groups = AuthCache.__userGroupsComb(authToken)
                     if isinstance(groups, Response):
                         return groups
                     grp_list = []
                     role_list = []
                     for group_uuid in groups:
-                        if group_uuid in AuthCache.groupsById:
+                        #if group_uuid in AuthCache.groupsById:
+                        #    grp_list.append(group_uuid)
+                        #elif group_uuid in AuthCache.rolesById:
+                        #    role_list.append(group_uuid)
+                        if not group_uuid in grp_list:
                             grp_list.append(group_uuid)
-                        elif group_uuid in AuthCache.rolesById:
-                            role_list.append(group_uuid)
                     jsonResp['hmgroupids'] = grp_list
+                    jsonResp['group_membership_ids'] = grp_list
                     jsonResp['hmroleids'] = role_list
                 return jsonResp
             else:
