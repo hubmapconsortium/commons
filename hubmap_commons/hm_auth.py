@@ -1,6 +1,5 @@
 from hubmap_commons import string_helper
 from flask import Response
-from flask import Request
 
 import flask
 import base64
@@ -17,7 +16,10 @@ from hubmap_commons import hubmap_const
 from hubmap_commons import exceptions
 
 TOKEN_EXPIRATION = 900 #15 minutes
-GLOBUS_GROUP_SCOPE = 'urn:globus:auth:scope:nexus.api.globus.org:groups'
+GLOBUS_NEXUS_GROUP_SCOPE = 'urn:globus:auth:scope:nexus.api.globus.org:groups'
+GLOBUS_GROUPS_API_SCOPE_ALL = 'urn:globus:auth:scope:groups.api.globus.org:all'
+GLOBUS_GROUPS_API_SCOPE_PART = 'urn:globus:auth:scope:groups.api.globus.org:view_my_groups_and_memberships'
+ALL_GROUP_SCOPES = [GLOBUS_GROUPS_API_SCOPE_ALL, GLOBUS_GROUPS_API_SCOPE_PART, GLOBUS_NEXUS_GROUP_SCOPE]
 
 data_admin_group_uuid = '89a69625-99d7-11ea-9366-0e98982705c1'
 
@@ -43,21 +45,16 @@ def secured(func=None, groups=None, scopes=None):
             if "is_system_account" in userInfo: sys_acct = userInfo['is_system_account'] 
             
             #check that auth is in required scope
-            tScopes = []
-            if hasGroups and sys_acct is False: tScopes.append(GLOBUS_GROUP_SCOPE)
-            if scopes is not None:
-                if isinstance(scopes, list): tScopes.extend(scopes)
-                else: tScopes.append(scopes)
-                tScopes = [x.lower() for x in tScopes]
-                tScopes = [x.strip() for x in tScopes]
-            if len(tScopes) > 0:
-                for scope in tScopes:
-                    if scope not in userInfo['hmscopes']:
-                        msg = "Not in user scope " + scope
-                        if scope == GLOBUS_GROUP_SCOPE:
-                            msg = msg + " which is required for access to user groups"
-                        return Response(msg, 403)
-            
+            if hasGroups and sys_acct is False:
+                in_scope = False
+                for scope in ALL_GROUP_SCOPES:
+                    if scope in userInfo['hmscopes']:
+                        in_scope = True
+                        break
+                if not in_scope:
+                    msg = "Not in one of user scopes " + ",".join(ALL_GROUP_SCOPES) + " which is required for access to user groups"
+                    return Response(msg, 403)
+
             #check for group access
             if hasGroups:
                 if isinstance(groups, list): tGroups = groups
