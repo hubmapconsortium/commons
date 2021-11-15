@@ -16,10 +16,10 @@ from hubmap_commons import hubmap_const
 from hubmap_commons import exceptions
 
 TOKEN_EXPIRATION = 900 #15 minutes
-GLOBUS_NEXUS_GROUP_SCOPE = 'urn:globus:auth:scope:nexus.api.globus.org:groups'
+#GLOBUS_NEXUS_GROUP_SCOPE = 'urn:globus:auth:scope:nexus.api.globus.org:groups'
 GLOBUS_GROUPS_API_SCOPE_ALL = 'urn:globus:auth:scope:groups.api.globus.org:all'
 GLOBUS_GROUPS_API_SCOPE_PART = 'urn:globus:auth:scope:groups.api.globus.org:view_my_groups_and_memberships'
-ALL_GROUP_SCOPES = [GLOBUS_GROUPS_API_SCOPE_ALL, GLOBUS_GROUPS_API_SCOPE_PART, GLOBUS_NEXUS_GROUP_SCOPE]
+ALL_GROUP_SCOPES = [GLOBUS_GROUPS_API_SCOPE_ALL, GLOBUS_GROUPS_API_SCOPE_PART]
 
 data_admin_group_uuid = '89a69625-99d7-11ea-9366-0e98982705c1'
 
@@ -148,7 +148,7 @@ class AuthHelper:
     #for a given group
     #
     # inputs
-    #      nexus_token: a nexus_auth token
+    #      Globus groups_token: a Globus Groups API auth token, with Groups API scope
     #       group_uuid: the group_uuid to check
     #
     # outputs
@@ -163,8 +163,8 @@ class AuthHelper:
     #   a standard Exception will be raise if an unexpected error occurs
     #     500 - any unexpected exception
     #
-    def check_write_privs(self, nexus_token, group_uuid):
-        user_info = self.getUserInfo(nexus_token, getGroups=True)
+    def check_write_privs(self, groups_token, group_uuid):
+        user_info = self.getUserInfo(groups_token, getGroups=True)
         if isinstance(user_info, Response):
             raise HTTPException(user_info.text, user_info.status_code)
         
@@ -272,10 +272,8 @@ class AuthHelper:
             return tokenResp;
 
         if isinstance(tokenResp, dict):
-            if getGroups and not ('nexus_token' in tokenResp or 'groups_token' in tokenResp):
-                return Response("Nexus token required to get group information.")
-            elif 'nexus_token' in tokenResp:
-                return self.getUserInfo(tokenResp['nexus_token'], getGroups)
+            if getGroups and not ('groups_token' in tokenResp):
+                return Response("Groups API scoped token required to get group information.")
             elif 'groups_token' in tokenResp:
                 return self.getUserInfo(tokenResp['groups_token'], getGroups)
             elif 'auth_token' in tokenResp:
@@ -330,8 +328,8 @@ class AuthHelper:
 
         user_info = None
         if isinstance(tokenResp, dict):
-            if 'nexus_token' in tokenResp:
-                user_info = self.getUserInfo(tokenResp['nexus_token'], True)
+            if 'groups_token' in tokenResp:
+                user_info = self.getUserInfo(tokenResp['groups_token'], True)
             elif 'auth_token' in tokenResp:
                 user_info = self.getUserInfo(tokenResp['auth_token'], False) 
             elif 'transfer_token' in tokenResp:
@@ -361,7 +359,7 @@ class AuthHelper:
             
         return user_info
 
-    #checks to see if the user identified by the nexus token in the request
+    #checks to see if the user identified by the Groups API scoped token in the request
     #is allowed to write to either specified by the group_uuid field or barring
     #a specific group_uuid checks to see if the user is a member of one (and only one)
     #group that is allowed to write
@@ -589,38 +587,38 @@ class AuthCache:
         return AuthCache.admin_groups
 
     #try to get user's group info via both deprecated Nexus token and new Groups API token
-    @staticmethod
-    def __userGroupsComb(token):
-        groups = AuthCache.__userGroupsNexus(token)
-        if isinstance(groups, Response):
-            #if the nexus call failed try the Groups API
-            groups = AuthCache.__get_user_groups_via_groups_api(token)
-        return groups
+    #@staticmethod
+    #def __userGroupsComb(token):
+    #    groups = AuthCache.__userGroupsNexus(token)
+    #    if isinstance(groups, Response):
+    #        #if the nexus call failed try the Groups API
+    #        groups = AuthCache.__get_user_groups_via_groups_api(token)
+    #    return groups
 
 
-    @staticmethod
-    def __userGroupsNexus(token):
-        if token == AuthCache.procSecret:
-            return AuthCache.__get_admin_groups()
+    #@staticmethod
+    #def __userGroupsNexus(token):
+    #    if token == AuthCache.procSecret:
+    #        return AuthCache.__get_admin_groups()
 
-        getHeaders = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': 'Bearer ' + token
-        }
-        url='https://nexus.api.globusonline.org/groups?fields=id,name,description,group_type,has_subgroups,identity_set_properties&for_all_identities=false&include_identaaaaay_set_properties=false&my_statuses=active'
-        response = requests.get(url, headers=getHeaders)
-        if response.status_code != 200:
-            return Response("Unable to get user groups\n"+response.text, 500)
-        try:
-            jsonResp = response.json()
-            ids = []
-            for value in jsonResp:
-                if 'id' in value:
-                    ids.append(value['id'].lower().strip())
-            return ids
-        except Exception as e:
-            return Response('Unable to parse json response while gathering user groups\n' + str(e), 500)
+    #    getHeaders = {
+    #        'Content-Type': 'application/json',
+    #        'Accept': 'application/json',
+    #        'Authorization': 'Bearer ' + token
+    #    }
+    #    url='https://nexus.api.globusonline.org/groups?fields=id,name,description,group_type,has_subgroups,identity_set_properties&for_all_identities=false&include_identaaaaay_set_properties=false&my_statuses=active'
+    #    response = requests.get(url, headers=getHeaders)
+    #    if response.status_code != 200:
+    #        return Response("Unable to get user groups\n"+response.text, 500)
+    #    try:
+    #        jsonResp = response.json()
+    #        ids = []
+    #        for value in jsonResp:
+    #            if 'id' in value:
+    #                ids.append(value['id'].lower().strip())
+    #        return ids
+    #    except Exception as e:
+    #        return Response('Unable to parse json response while gathering user groups\n' + str(e), 500)
 
     @staticmethod
     def __get_user_groups_via_groups_api(token):
@@ -670,7 +668,9 @@ class AuthCache:
                         AuthCache.getHMGroups()
                     if len(AuthCache.rolesById) == 0:
                         AuthCache.getHMRoles()
-                    groups = AuthCache.__userGroupsComb(authToken)
+                    #groups = AuthCache.__userGroupsComb(authToken)
+                    groups = AuthCache.__get_user_groups_via_groups_api(token)
+
                     if isinstance(groups, Response):
                         return groups
                     grp_list = []
