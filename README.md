@@ -3,11 +3,7 @@ This repository contains the code supporting several HuBMAP restful microservice
 
 The code includes:
 
-* **~~activity.py~~ (deprecated)** creates Cyhper statements for creating and getting HuBMAP Activitiy node types
-
 * **autherror.py** a class to handle authentiation errors
-
-* **~~entity.py~~(deprecated)** a base class that executes many Cypher queries against Neo4j to return information about the HuBMAP Entity nodes
 
 * **file_helper.py** contains methods to execute files and parse files
 
@@ -19,12 +15,8 @@ The code includes:
 
 * **hubmap_const.py** a file that maintains the names and strings used in the code and the Neo4j system
 
-* **~~neo4j_connection.py~~(deprecated)** provides connections to Neo4j and some generic Cypher statements (e.g. CREATE and UPDATE)
-
 * **neo4j_driver.py** creates a neo4j.Driver singleton instance
-
-* **~~provenance.py~~(deprecated)** extracts provenance related information from a token
-
+* 
 * **schema_tools.py** checks a JSON structure vs a schema definition using two main methods. 
 
     - `check_json_matches_schema(jsondata, schema_filename: str, base_path: str = "", base_uri: str = "")`
