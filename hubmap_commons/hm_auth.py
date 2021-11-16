@@ -669,7 +669,7 @@ class AuthCache:
                     if len(AuthCache.rolesById) == 0:
                         AuthCache.getHMRoles()
                     #groups = AuthCache.__userGroupsComb(authToken)
-                    groups = AuthCache.__get_user_groups_via_groups_api(token)
+                    groups = AuthCache.__get_user_groups_via_groups_api(authToken)
 
                     if isinstance(groups, Response):
                         return groups
