@@ -5,6 +5,8 @@ The code includes:
 
 * **autherror.py** a class to handle authentiation errors
 
+* **~~entity.py~~(deprecated)** a base class that executes many Cypher queries against Neo4j to return information about the HuBMAP Entity nodes
+
 * **file_helper.py** contains methods to execute files and parse files
 
 * **globus_file_helper.py** contains methods for creating Globus directories
