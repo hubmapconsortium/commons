@@ -15,6 +15,8 @@ The code includes:
 
 * **hubmap_const.py** a file that maintains the names and strings used in the code and the Neo4j system
 
+* **~~neo4j_connection.py~~(deprecated)** provides connections to Neo4j and some generic Cypher statements (e.g. CREATE and UPDATE)
+
 * **neo4j_driver.py** creates a neo4j.Driver singleton instance
 * 
 * **schema_tools.py** checks a JSON structure vs a schema definition using two main methods. 
