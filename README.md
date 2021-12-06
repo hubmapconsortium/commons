@@ -1,5 +1,22 @@
 # commons
+
+[![PyPI version](https://badge.fury.io/py/hubmap-commons.svg)](https://badge.fury.io/py/hubmap-commons)
+
 This repository contains the code supporting several HuBMAP restful microservices.
+
+### Getting Started
+
+The hubmap commons library is available through PyPi via the command:
+
+```bash
+pip install hubmap-commons
+```
+
+The hubmap-commons requirements can be found [here](requirements.txt)
+
+
+
+### Contents
 
 The code includes:
 
