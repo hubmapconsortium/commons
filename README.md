@@ -6,7 +6,7 @@ This repository contains the code supporting several HuBMAP restful microservice
 The hubmap commons library is available through PyPi via the command:
 
 ```bash
-pip3 hubmap-commons
+pip3 install hubmap-commons
 ```
 
 The hubmap-commons requirements can be found [here](requirements.txt)
