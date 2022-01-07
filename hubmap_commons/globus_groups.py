@@ -5,8 +5,7 @@ import logging
 
 # HuBMAP commons
 from hubmap_commons import string_helper
-from hubmap_commons.hm_auth import AuthHelper
-from hm_auth import AuthCache
+from hubmap_commons.hm_auth import AuthHelper, AuthCache
 
 # LRU Cache implementation with per-item time-to-live (TTL) value
 # with a memoizing callable that saves up to maxsize results based on a Least Frequently Used (LFU) algorithm
