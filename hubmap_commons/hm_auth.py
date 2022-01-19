@@ -99,10 +99,10 @@ class AuthHelper:
             return(AuthHelper.create(clientId, clientSecret))
 
     @staticmethod
-    def create(clientId, clientSecret):
+    def create(clientId, clientSecret, globusGroups):
         if helperInstance is not None:
             raise Exception("An instance of AuthHelper exists already.  Use the AuthHelper.instance method to retrieve it.")
-        return AuthHelper(clientId, clientSecret)
+        return AuthHelper(clientId, clientSecret, globusGroups)
     
     @staticmethod
     def instance():
@@ -128,8 +128,7 @@ class AuthHelper:
         if not group_uuid in grps_by_id: return None
         return grps_by_id[group_uuid]['displayname']
 
-
-    def __init__(self, clientId, clientSecret):
+    def __init__(self, clientId, clientSecret, globusGroups=None):
         global helperInstance
         if helperInstance is not None:
             raise Exception("An instance of singleton AuthHelper exists already.  Use AuthHelper.instance() to retrieve it")
@@ -139,6 +138,8 @@ class AuthHelper:
         
         self.applicationClientId = clientId
         self.applicationClientSecret = clientSecret
+        if globusGroups is not None:
+            AuthCache.setGlobusGroups(globusGroups)
         AuthCache.setProcessSecret(re.sub(r'[^a-zA-Z0-9]', '', clientSecret))
         if helperInstance is None:
             helperInstance = self
@@ -454,8 +455,26 @@ class AuthHelper:
                     return_list.append(role_list[role_name])
                     break
         return return_list
- 
-    
+
+
+def identifyGroups(groups):
+    groupIdByName = {}
+    for group in groups:
+        if 'name' in group and 'uuid' in group and 'generateuuid' in group and 'displayname' in group and not string_helper.isBlank(
+                group['name']) and not string_helper.isBlank(group['uuid']) and not string_helper.isBlank(
+            group['displayname']):
+            group_obj = {'name': group['name'].lower().strip(), 'uuid': group['uuid'].lower().strip(),
+                         'displayname': group['displayname'], 'generateuuid': group['generateuuid']}
+            if 'tmc_prefix' in group:
+                group_obj['tmc_prefix'] = group['tmc_prefix']
+            if 'data_provider' in group:
+                group_obj['data_provider'] = group['data_provider']
+            if 'shortname' in group:
+                group_obj['shortname'] = group['shortname']
+            groupIdByName[group['name'].lower().strip()] = group_obj
+            AuthCache.groupsById[group['uuid']] = group_obj
+    return groupIdByName
+
 class AuthCache:
     cache = {}
     userLock = threading.RLock()
@@ -466,6 +485,7 @@ class AuthCache:
     rolesById = {}
     groupLastRefreshed = None
     groupJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-globus-groups.json'
+    globusGroups = None
     roleJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-globus-roles.json'
     procSecret = None
     admin_groups = None
@@ -478,6 +498,10 @@ class AuthCache:
             AuthCache.procSecret = secret
 
     @staticmethod
+    def setGlobusGroups(globusJson):
+        AuthCache.globusGroups = identifyGroups(globusJson)
+
+    @staticmethod
     def getHMGroups():
         with AuthCache.groupLock:
             now = datetime.datetime.now()
@@ -485,24 +509,14 @@ class AuthCache:
             if AuthCache.groupLastRefreshed is not None:
                 diff = now - AuthCache.groupLastRefreshed
             if diff is None or diff.days > 0 or diff.seconds > TOKEN_EXPIRATION:
-                groupIdByName = {}                    
-                #groupsById = {}                    
-                with open(AuthCache.groupJsonFilename) as jsFile:
-                    groups = json.load(jsFile)
-                    for group in groups:
-                        if 'name' in group and 'uuid' in group and 'generateuuid' in group and 'displayname' in group and not string_helper.isBlank(group['name']) and not string_helper.isBlank(group['uuid']) and not string_helper.isBlank(group['displayname']):
-                            group_obj = {'name' : group['name'].lower().strip(), 'uuid' : group['uuid'].lower().strip(),
-                                         'displayname' : group['displayname'], 'generateuuid': group['generateuuid']}
-                            if 'tmc_prefix' in group:
-                                group_obj['tmc_prefix'] = group['tmc_prefix']
-                            if 'data_provider' in group:
-                                group_obj['data_provider'] = group['data_provider']
-                            if 'shortname' in group:
-                                group_obj['shortname'] = group['shortname']
-                            groupIdByName[group['name'].lower().strip()] = group_obj
-                            AuthCache.groupsById[group['uuid']] = group_obj
-            return groupIdByName
-    
+                if AuthCache.globusGroups is not None:
+                    return AuthCache.globusGroups
+                else:
+                    with open(AuthCache.groupJsonFilename) as jsFile:
+                        groups = json.load(jsFile)
+                        return identifyGroups(groups)
+
+
     @staticmethod
     def getHMGroupsById():
         if len(AuthCache.groupsById) == 0:
