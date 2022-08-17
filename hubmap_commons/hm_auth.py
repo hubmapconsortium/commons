@@ -128,7 +128,7 @@ class AuthHelper:
         if not group_uuid in grps_by_id: return None
         return grps_by_id[group_uuid]['displayname']
 
-    def __init__(self, clientId, clientSecret, globusGroups=None):
+    def __init__(self, clientId, clientSecret, globusGroups=None, use_sennet_groups=False):
         global helperInstance
         if helperInstance is not None:
             raise Exception("An instance of singleton AuthHelper exists already.  Use AuthHelper.instance() to retrieve it")
@@ -140,6 +140,10 @@ class AuthHelper:
         self.applicationClientSecret = clientSecret
         if globusGroups is not None:
             AuthCache.setGlobusGroups(globusGroups)
+        if use_sennet_groups:
+            with open(AuthCache.sennetGroupJsonFilename) as jsFile:
+                sennet_groups = json.load(jsFile)
+                AuthCache.setGlobusGroups(sennet_groups)
         AuthCache.setProcessSecret(re.sub(r'[^a-zA-Z0-9]', '', clientSecret))
         if helperInstance is None:
             helperInstance = self
@@ -485,6 +489,7 @@ class AuthCache:
     rolesById = {}
     groupLastRefreshed = None
     groupJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-globus-groups.json'
+    sennetGroupJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'sennet-globus-groups.json'
     globusGroups = None
     roleJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-globus-roles.json'
     procSecret = None
@@ -503,19 +508,12 @@ class AuthCache:
 
     @staticmethod
     def getHMGroups():
-        with AuthCache.groupLock:
-            now = datetime.datetime.now()
-            diff = None
-            if AuthCache.groupLastRefreshed is not None:
-                diff = now - AuthCache.groupLastRefreshed
-            if diff is None or diff.days > 0 or diff.seconds > TOKEN_EXPIRATION:
-                if AuthCache.globusGroups is not None:
-                    return AuthCache.globusGroups
-                else:
-                    with open(AuthCache.groupJsonFilename) as jsFile:
-                        groups = json.load(jsFile)
-                        return identifyGroups(groups)
-
+        if AuthCache.globusGroups is not None:
+            return AuthCache.globusGroups
+        else:
+            with open(AuthCache.groupJsonFilename) as jsFile:
+                groups = json.load(jsFile)
+                return identifyGroups(groups)
 
     @staticmethod
     def getHMGroupsById():
