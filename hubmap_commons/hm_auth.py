@@ -99,10 +99,10 @@ class AuthHelper:
             return(AuthHelper.create(clientId, clientSecret))
 
     @staticmethod
-    def create(clientId, clientSecret, globusGroups=None):
+    def create(clientId, clientSecret, globusGroups=None, use_sennet_groups=False):
         if helperInstance is not None:
             raise Exception("An instance of AuthHelper exists already.  Use the AuthHelper.instance method to retrieve it.")
-        return AuthHelper(clientId, clientSecret, globusGroups)
+        return AuthHelper(clientId, clientSecret, globusGroups, use_sennet_groups)
     
     @staticmethod
     def instance():
