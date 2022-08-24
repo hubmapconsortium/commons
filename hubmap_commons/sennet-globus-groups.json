@@ -4,7 +4,7 @@
     "data_provider": false,
     "has_subgroups": false,
     "identity_set_properties": null,
-    "uuid": "51155194-09e5-11ed-a1a7-39992a34a522"
+    "uuid": "51155194-09e5-11ed-a1a7-39992a34a522",
     "group_type": "regular",
     "name": "SenNet - Read",
     "displayname": "SenNet Read",
