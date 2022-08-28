@@ -4,7 +4,6 @@ Created on May 15, 2019
 @author: chb69
 '''
 #from neo4j.exceptions import TransactionError, CypherError
-import json
 import sys
 import os
 from pprint import pprint
@@ -14,7 +13,7 @@ import traceback
 from hubmap_commons.hubmap_const import HubmapConst 
 from hubmap_commons.neo4j_connection import Neo4jConnection
 from hubmap_commons.uuid_generator import UUID_Generator
-from hubmap_commons.hm_auth import AuthHelper, AuthCache
+from hubmap_commons.hm_auth import AuthHelper
 from hubmap_commons.entity import Entity
 
 class Metadata(object):

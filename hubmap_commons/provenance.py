@@ -6,23 +6,15 @@ Created on Sep 1, 2019
 #from neo4j import TransactionError, CypherError
 from hubmap_commons import string_helper, file_helper
 import os
-import sys
 import configparser
-import requests
 import traceback
-from pprint import pprint
 import json
 import prov
-from prov.model import ProvDocument, PROV_TYPE, Namespace, NamespaceManager
-from prov.serializers.provjson import ProvJSONSerializer
 import datetime
-from pytz import timezone
-import pytz
 
 
 from hubmap_commons.hubmap_const import HubmapConst 
 from hubmap_commons.neo4j_connection import Neo4jConnection
-from hubmap_commons.uuid_generator import UUID_Generator
 from hubmap_commons.entity import Entity
 from hubmap_commons.hm_auth import AuthHelper, AuthCache
 from builtins import staticmethod
@@ -82,7 +74,12 @@ class Provenance:
         self.load_group_data()
 
     def load_group_data(self):
-        with open(AuthCache.groupJsonFilename) as jsFile:
+        if AuthHelper.isInitialized() == False:
+            authcache = AuthHelper.create(
+                self.provenance_config['appclientid'], self.provenance_config['appclientsecret'])
+        else:
+            authcache = AuthHelper.instance()
+        with open(authcache.groupJsonFilename) as jsFile:
             self.groups = json.load(jsFile)
             self.groups_by_tmc_prefix = {}
             for group in self.groups:

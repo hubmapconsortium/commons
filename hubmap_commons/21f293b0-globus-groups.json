@@ -5,7 +5,7 @@
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "5777527e-ec11-11e8-ab41-0af86edb4424",
-    "group_type": "regular",
+    "group_type": "data-read",
     "name": "HuBMAP-Read",
     "displayname": "HuBMAP Read",
     "generateuuid": false
@@ -27,7 +27,7 @@
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "89a69625-99d7-11ea-9366-0e98982705c1",
-    "group_type": "regular",
+    "group_type": "data-admin",
     "name": "HuBMAP-Data-Admin",
     "displayname": "HuBMAP Data Admin",
     "generateuuid": false

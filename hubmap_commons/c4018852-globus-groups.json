@@ -5,7 +5,7 @@
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "51155194-09e5-11ed-a1a7-39992a34a522",
-    "group_type": "regular",
+    "group_type": "data-read",
     "name": "SenNet - Read",
     "displayname": "SenNet Read",
     "generateuuid": false
@@ -27,7 +27,7 @@
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "f654cd0d-1d9c-11ed-b7d5-972795fc9504",
-    "group_type": "regular",
+    "group_type": "data-admin",
     "name": "SenNet-Data-Admin",
     "displayname": "SenNet Data Admin",
     "generateuuid": false

@@ -4,14 +4,7 @@ Created on Sep 1, 2019
 @author: chb69
 '''
 import requests
-import sys
-import os
 
-from pprint import pprint
-
-
-from hubmap_commons.hm_auth import AuthCache, AuthHelper
-from hubmap_commons.entity import Entity
 from hubmap_commons.uuid_generator import UUID_Generator
 from hubmap_commons.hubmap_const import HubmapConst 
 from hubmap_commons.neo4j_connection import Neo4jConnection
