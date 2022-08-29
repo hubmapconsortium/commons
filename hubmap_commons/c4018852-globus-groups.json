@@ -56,7 +56,7 @@
     "displayname": "Brown University TDA",
     "shortname": "TDA - Brown",
     "generateuuid": true,
-    "tmc_prefix": "BRN"
+    "tmc_prefix": "BROWN"
   },
   {
     "description": "Users who have write access to the Buck Institute TDA data directory",
@@ -82,7 +82,7 @@
     "displayname": "Massachusetts General Hospital TDA",
     "shortname": "TDA - Mass Gen",
     "generateuuid": true,
-    "tmc_prefix": "MASS"
+    "tmc_prefix": "MASSGEN"
   },
   {
     "description": "Users who have write access to the Mayo Clinic TDA - Passos data directory",
@@ -95,7 +95,7 @@
     "displayname": "Mayo Clinic TDA - Passos",
     "shortname": "TDA - Mayo - Passos",
     "generateuuid": true,
-    "tmc_prefix": "MAYO"
+    "tmc_prefix": "MAYO1"
   },
   {
     "description": "Users who have write access to the Stanford University TDA data directory",
@@ -121,7 +121,7 @@
     "displayname": "University of Michigan TDA",
     "shortname": "TDA - UMich",
     "generateuuid": true,
-    "tmc_prefix": "MICH"
+    "tmc_prefix": "UMICH"
   },
   {
     "description": "Users who have write access to the University of Washington TDA data directory",
@@ -160,7 +160,7 @@
     "displayname": "Columbia University TMC",
     "shortname": "TMC - Columbia",
     "generateuuid": true,
-    "tmc_prefix": "COLUM"
+    "tmc_prefix": "COLUM1"
   },
   {
     "description": "Users who have write access to the Duke University TMC data directory",
@@ -212,7 +212,7 @@
     "displayname": "University of Minnesota TMC - Niedernhofer",
     "shortname": "TMC - UMinn - Niedernhofer",
     "generateuuid": true,
-    "tmc_prefix": "UMINNNIED"
+    "tmc_prefix": "UMINN1"
   },
   {
     "description": "Users who have write access to the Washington University TMC data directory",
@@ -238,7 +238,7 @@
     "displayname": "Yale University TMC - Fan",
     "shortname": "TMC - Yale - Fan",
     "generateuuid": true,
-    "tmc_prefix": "YALEFAN"
+    "tmc_prefix": "YALE1"
   },
   {
     "description": "Users who have write access to the Columbia University TDA data directory",
@@ -251,7 +251,7 @@
     "displayname": "TDA - Columbia University",
     "shortname": "TDA - Colum",
     "generateuuid": true,
-    "tmc_prefix": "TDACOLUM"
+    "tmc_prefix": "COLUM2"
   },
   {
     "description": "Users who have write access to the SenNet Johns Hopkins University TDA  data directory",
@@ -290,7 +290,7 @@
     "displayname": "TDA - Mayo Clinic - Schafer",
     "shortname": "TDA - Mayo - Schafer",
     "generateuuid": true,
-    "tmc_prefix": "MAYOSCHAFER"
+    "tmc_prefix": "MAYO2"
   },
   {
     "description": "Users who have write access to the SenNet TDA PNL  data directory",
@@ -303,7 +303,7 @@
     "displayname": "TDA - Pacific Northwest National Laboratory",
     "shortname": "TDA - PNL",
     "generateuuid": true,
-    "tmc_prefix": "TDAPNL"
+    "tmc_prefix": "PNL"
   },
   {
     "description": "Users who have write access to the SenNet JHU TMC  data directory",
@@ -329,7 +329,7 @@
     "displayname": "TMC - The Jackson Laboratory",
     "shortname": "TMC - Jackson",
     "generateuuid": true,
-    "tmc_prefix": "TMCJACK"
+    "tmc_prefix": "JACKSON"
   },
   {
     "description": "Users who have write access to the SenNet University of Minnesota - Bernlohr TMC  data directory",
@@ -342,7 +342,7 @@
     "displayname": "TMC - University of Minnesota - Bernlohr",
     "shortname": "TMC - UMinn - Bernlohr",
     "generateuuid": true,
-    "tmc_prefix": "TMCMINNBERN"
+    "tmc_prefix": "UMINN2"
   },
   {
     "description": "Users who have write access to the SenNet UCSD TMC  data directory",
@@ -355,7 +355,7 @@
     "displayname": "TMC - University of California San Diego",
     "shortname": "TMC - UCSD",
     "generateuuid": true,
-    "tmc_prefix": "TMCUCSD"
+    "tmc_prefix": "UCSD"
   },
   {
     "description": "Users who have write access to the SenNet Yale - Dixit TMC  data directory",
@@ -368,6 +368,6 @@
     "displayname": "TMC - Yale University - Dixit",
     "shortname": "TMC - Yale - Dixit",
     "generateuuid": true,
-    "tmc_prefix": "TMCYALEDIXIT"
+    "tmc_prefix": "YALE2"
   }
 ]
