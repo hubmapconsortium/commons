@@ -14,7 +14,6 @@ from hubmap_commons.exceptions import HTTPException
 from hubmap_commons import file_helper
 from hubmap_commons import hubmap_const
 from hubmap_commons import exceptions
-from pickle import TRUE
 
 TOKEN_EXPIRATION = 900 #15 minutes
 #GLOBUS_NEXUS_GROUP_SCOPE = 'urn:globus:auth:scope:nexus.api.globus.org:groups'
