@@ -197,7 +197,8 @@ class AuthHelper:
         non_empty_keys = ['name', 'displayname']
         boolean_keys = ['data_provider']
     
-        for group in groups:
+        for group_key in groups.keys():
+            group = groups[group_key]
             # A bit data integrity check
             for key in required_keys:
                 if key not in group:
@@ -243,7 +244,7 @@ class AuthHelper:
             'by_name': groups_by_name,
             'by_tmc_prefix': groups_by_tmc_prefix
         }
-
+        return globus_groups
 
             
     #method to check if an auth token has write privileges
