@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="hubmap-commons",
-    version="2.0.15",
+    version="2.1.0",
     author="HuBMAP Consortium",
     author_email="api-developers@hubmapconsortium.org",
     description="The common utilities used by the HuMBAP web services",
@@ -16,18 +16,17 @@ setup(
     package_data={'': ['*.json']},
     include_package_data=True,
     install_requires=[
-        'cachetools>=4.2.1',
-        'Flask>=1.1.2',
+        'Flask==2.1.3',
+        'jsonref>=0.2',
+        'jsonschema==3.2.0',
+        'neo4j==4.4',
+        'pytz>=2021.1',
+        'property>=2.2',
         # Airflow dependes on globus_sdk==1.9.0
         'globus_sdk>=1.9.0',
-        'jsonref>=0.2',
-        'jsonschema>=3.2.0',
-        'neo4j>=4.2.1',
         # cwltool uses prov==1.5.1
         # Will remove provenance.py and this prov dependency later
         'prov>=1.5.1',
-        'pytz>=2021.1',
-        'property>=2.2',
         # It's an agreement with other collaborators to use the beblow versions
         # for requests and PyYAML
         'requests>=2.22.0',
