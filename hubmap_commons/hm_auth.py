@@ -318,6 +318,9 @@ class AuthHelper:
             return True
         return self.has_write_privs(groups_token)
 
+    def get_default_read_group_uuid(self):
+        return self.data_read_group_uuid
+    
     def getProcessSecret(self):
         return AuthCache.procSecret
 
