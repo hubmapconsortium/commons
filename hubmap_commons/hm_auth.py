@@ -307,6 +307,17 @@ class AuthHelper:
             
         return False
     
+    #method to check to see if a user is a member of a group with type data-admin
+    def has_data_admin_privs(self, groups_token):
+        user_info = self.getUserInfo(groups_token, getGroups=True)
+        if isinstance(user_info, Response):
+            return user_info 
+        
+        if not self.data_admin_group_uuid is None and self.data_admin_group_uuid in user_info['hmgroupids']:
+            return True
+            
+        return False
+
     #check to see if a user has read privileges
     #the user has read privileges if they are a member of the
     #default read group or if they have write privileges at all per the above has_write_privs method
