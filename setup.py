@@ -16,10 +16,10 @@ setup(
     package_data={'': ['*.json']},
     include_package_data=True,
     install_requires=[
-        'Flask==2.1.3',
+        'Flask>=2.1.3',
         'jsonref>=0.2',
-        'jsonschema==3.2.0',
-        'neo4j==4.4',
+        'jsonschema>=3.2.0',
+        'neo4j>=4.2.1',
         'pytz>=2021.1',
         'property>=2.2',
         # Airflow dependes on globus_sdk==1.9.0
