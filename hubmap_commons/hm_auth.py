@@ -21,23 +21,25 @@ GLOBUS_GROUPS_API_SCOPE_ALL = 'urn:globus:auth:scope:groups.api.globus.org:all'
 GLOBUS_GROUPS_API_SCOPE_PART = 'urn:globus:auth:scope:groups.api.globus.org:view_my_groups_and_memberships'
 ALL_GROUP_SCOPES = [GLOBUS_GROUPS_API_SCOPE_ALL, GLOBUS_GROUPS_API_SCOPE_PART]
 
-data_admin_group_uuid = '89a69625-99d7-11ea-9366-0e98982705c1'
-
 #this is only used by the secured decorator below as it needs access 
 #to client information.  It is initialized the first time an AuthHelper is
 #created.
 helperInstance = None
 
-def secured(func=None, groups=None, scopes=None):
+def secured(func=None, groups=None, scopes=None, has_read=False, has_write=False):
     def secured_decorator(func):
         @functools.wraps(func)
         def secured_inner(*args, **kwargs):
             if helperInstance is None:
                 return Response("Error checking security credentials.  A valid auth worker not found.  Make sure you create a hm_auth.AuthHelper during service initialization", 500)            
-            hasGroups = groups is not None
+            hasGroups = groups is not None or has_read or has_write
 
             #make sure we have a valid, active auth token
-            userInfo = helperInstance.getUserInfoUsingRequest(flask.request, hasGroups)
+            user_token = helperInstance.getUserTokenFromRequest(flask.request, hasGroups)
+            if isinstance(user_token, Response):
+                return user_token
+            
+            userInfo = helperInstance.getUserInfo(user_token, hasGroups)
             if isinstance(userInfo, Response):
                 return userInfo
             
@@ -54,9 +56,25 @@ def secured(func=None, groups=None, scopes=None):
                 if not in_scope:
                     msg = "Not in one of user scopes " + ",".join(ALL_GROUP_SCOPES) + " which is required for access to user groups"
                     return Response(msg, 403)
-
+            
+            if has_read == True:
+                check_read = helperInstance.has_read_privs(user_token)
+                if isinstance(check_read, Response):
+                    return check_read
+                if check_read == False:
+                    msg = "User does not have read privileges, must be member of a data-provider group or the default data-read group"
+                    return Response(msg, 403)
+            
+            if has_write == True:
+                check_write = helperInstance.has_write_privs(user_token)
+                if isinstance(check_write, Response):
+                    return(check_write)
+                if check_write == False:
+                    msg = "User does not have required write privileges, must be a member of any data-provider group or the data-admin group"
+                    return Response(msg, 403)
+    
             #check for group access
-            if hasGroups:
+            if groups is not None:
                 if isinstance(groups, list): tGroups = groups
                 else: tGroups = [groups]
                 for group in tGroups:
@@ -99,10 +117,10 @@ class AuthHelper:
             return(AuthHelper.create(clientId, clientSecret))
 
     @staticmethod
-    def create(clientId, clientSecret, globusGroups=None):
+    def create(clientId, clientSecret):
         if helperInstance is not None:
             raise Exception("An instance of AuthHelper exists already.  Use the AuthHelper.instance method to retrieve it.")
-        return AuthHelper(clientId, clientSecret, globusGroups)
+        return AuthHelper(clientId, clientSecret)
     
     @staticmethod
     def instance():
@@ -128,29 +146,112 @@ class AuthHelper:
         if not group_uuid in grps_by_id: return None
         return grps_by_id[group_uuid]['displayname']
 
-    def __init__(self, clientId, clientSecret, globusGroups=None):
+    def __init__(self, clientId, clientSecret):
         global helperInstance
+        baseGroupFilename = '-globus-groups.json'
+
         if helperInstance is not None:
             raise Exception("An instance of singleton AuthHelper exists already.  Use AuthHelper.instance() to retrieve it")
         
         if clientId is None or clientSecret is None or string_helper.isBlank(clientId) or string_helper.isBlank(clientSecret):
             raise Exception("Globus client id and secret are required in AuthHelper")
         
-        self.applicationClientId = clientId
+        self.applicationClientId = clientId.strip()
         self.applicationClientSecret = clientSecret
-        if globusGroups is not None:
-            AuthCache.setGlobusGroups(globusGroups)
+        group_filename_prefix = self.applicationClientId[0:8]
+        self.groupJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + group_filename_prefix + baseGroupFilename
+        
+        with open(self.groupJsonFilename) as jsFile:
+            groups = json.load(jsFile)
+            AuthCache.setGlobusGroups(groups)
+
+        #from the group definition file find the group of type data-admin
+        all_groups = AuthCache.getHMGroups()
+        self.data_admin_group_uuid = None
+        self.data_read_group_uuid = None
+        for grp_name in all_groups.keys():
+            grp = all_groups[grp_name]
+            if 'group_type' in grp:
+                if grp['group_type'] == 'data-admin':
+                    self.data_admin_group_uuid = grp['uuid']
+                elif grp['group_type'] == 'data-read':
+                    self.data_read_group_uuid = grp['uuid']
+
         AuthCache.setProcessSecret(re.sub(r'[^a-zA-Z0-9]', '', clientSecret))
         if helperInstance is None:
             helperInstance = self
+            
+        AuthCache.setClientId(clientId)
 
 
+
+    def get_globus_groups_info(self):
+        groups = AuthCache.globusGroups
+    
+        groups_by_id = {}
+        groups_by_name = {}
+        groups_by_tmc_prefix = {}
+    
+        required_keys = ['name', 'uuid', 'generateuuid', 'displayname', 'data_provider']
+        non_empty_keys = ['name', 'displayname']
+        boolean_keys = ['data_provider']
+    
+        for group_key in groups.keys():
+            group = groups[group_key]
+            # A bit data integrity check
+            for key in required_keys:
+                if key not in group:
+                    msg = f'Key "{key}" is required for each object in the globus groups json file'
+                    raise KeyError(msg)
+    
+            for key in non_empty_keys:
+                if string_helper.isBlank(group[key]):
+                    msg = f'The value of key "{key}" can not be empty string in each object in the globus groups json file'
+                    raise ValueError(msg)
+    
+            for key in boolean_keys:
+                if not isinstance(group[key], bool):
+                    msg = f'The value of key "{key}" must be a boolean in each object in the globus groups json file'
+                    raise ValueError(msg)
+    
+            # By now all the checks passed, we are good for the business
+            group_obj = {
+                'name' : group['name'].lower().strip(),
+                'uuid' : group['uuid'].lower().strip(),
+                'displayname' : group['displayname'],
+                'generateuuid': group['generateuuid'],
+                'data_provider': group['data_provider']
+            }
+    
+            # Key "tmc_prefix" is optional
+            if 'tmc_prefix' in group:
+                group_obj['tmc_prefix'] = group['tmc_prefix']
+    
+                group_info = {}
+                group_info['uuid'] = group['uuid'].lower().strip()
+                group_info['displayname'] = group['displayname']
+                group_info['tmc_prefix'] = group['tmc_prefix']
+    
+                groups_by_tmc_prefix[group['tmc_prefix'].upper().strip()] = group_info
+    
+            groups_by_name[group['name'].lower().strip()] = group_obj
+            groups_by_id[group['uuid']] = group_obj
+    
+        # Wrap the final data
+        globus_groups = {
+            'by_id': groups_by_id,
+            'by_name': groups_by_name,
+            'by_tmc_prefix': groups_by_tmc_prefix
+        }
+        return globus_groups
+
+            
     #method to check if an auth token has write privileges
     #for a given group
     #
     # inputs
     #      Globus groups_token: a Globus Groups API auth token, with Groups API scope
-    #       group_uuid: the group_uuid to check
+    #       group_uuid: the group_uuid to check to see if the user has write privs for
     #
     # outputs
     #     True if the token is authorized for the group
@@ -177,7 +278,7 @@ class AuthHelper:
             raise HTTPException(f"grop with uuid {group_uuid} is not a valid data provider group", 400)
         
         if 'hmgroupids' in user_info:
-            if data_admin_group_uuid in user_info['hmgroupids']:
+            if not self.data_admin_group_uuid is None and self.data_admin_group_uuid in user_info['hmgroupids']:
                 return True
             elif group_uuid not in user_info['hmgroupids']:
                 raise HTTPException("User not authorized for group.", 403)
@@ -185,6 +286,73 @@ class AuthHelper:
                 return True
         else:
             raise HTTPException("User is not authorized, no group membership", 403)
+    
+    #method to check to see if a user has any write privileges at all
+    #user (via token) must have membership in any group with a "data_provider" == true attribute or
+    #a member of a group with type data-admin
+    def has_write_privs(self, groups_token):
+        user_info = self.getUserInfo(groups_token, getGroups=True)
+        if isinstance(user_info, Response):
+            return user_info 
+
+        #if the user is a member of the data-admin group, they have write privs        
+        if not self.data_admin_group_uuid is None and self.data_admin_group_uuid in user_info['hmgroupids']:
+            return True
+        
+        #loop through all groups that a user is a member of and if any of these groups has "data_provider" set to true, the user has write privs
+        groups_by_id = self.getHMGroupsById()
+        for grp_id in user_info['hmgroupids']:
+            if grp_id in groups_by_id and 'data_provider' in groups_by_id[grp_id] and groups_by_id[grp_id]['data_provider'] == True:
+                return True
+            
+        return False
+    
+    #method to check to see if a user is a member of a group with type data-admin
+    def has_data_admin_privs(self, groups_token):
+        user_info = self.getUserInfo(groups_token, getGroups=True)
+        if isinstance(user_info, Response):
+            return user_info 
+        
+        if not self.data_admin_group_uuid is None and self.data_admin_group_uuid in user_info['hmgroupids']:
+            return True
+            
+        return False
+
+    #method, give a user's token, will return a list of groups that the user is a member of with write
+    #privs.  Any group that the user is a member of with a "data_provider" == true attribute is added
+    #to the return list.  If the user isn't a member of any write/data_provider groups an emptly list
+    #is returned
+    #
+    #A Flask Response object is returned in case of an error containing the correct response code and message
+    #that can be returned directly from a WS endpoint
+    def get_user_write_groups(self, groups_token):
+        user_info = self.getUserInfo(groups_token, getGroups=True)
+        if isinstance(user_info, Response):
+            return user_info 
+
+        write_groups = []
+        #loop through all groups that a user is a member of and if any of these groups has "data_provider"
+        #add it to the list of returned groups.
+        groups_by_id = self.getHMGroupsById()
+        for grp_id in user_info['hmgroupids']:
+            if grp_id in groups_by_id and 'data_provider' in groups_by_id[grp_id] and groups_by_id[grp_id]['data_provider'] == True:
+                write_groups.append(groups_by_id[grp_id])
+            
+        return write_groups
+
+    #check to see if a user has read privileges
+    #the user has read privileges if they are a member of the
+    #default read group or if they have write privileges at all per the above has_write_privs method
+    def has_read_privs(self, groups_token):
+        user_info = self.getUserInfo(groups_token, getGroups = True)
+        if isinstance(user_info, Response):
+            return user_info
+        if not self.data_read_group_uuid is None and self.data_read_group_uuid in user_info['hmgroupids']:
+            return True
+        return self.has_write_privs(groups_token)
+
+    def get_default_read_group_uuid(self):
+        return self.data_read_group_uuid
     
     def getProcessSecret(self):
         return AuthCache.procSecret
@@ -268,6 +436,13 @@ class AuthHelper:
             raise ValueError('No Authorization header')
     
     def getUserInfoUsingRequest(self, httpReq, getGroups = False):
+        token = self.getUserTokenFromRequest(httpReq, getGroups)
+        if isinstance(token, Response):
+            return token;
+
+        return self.getUserInfo(token, getGroups)
+    
+    def getUserTokenFromRequest(self, httpReq, getGroups):
         tokenResp = self.getAuthorizationTokens(httpReq.headers)
         if isinstance(tokenResp, Response):
             return tokenResp;
@@ -276,15 +451,15 @@ class AuthHelper:
             if getGroups and not ('groups_token' in tokenResp):
                 return Response("Groups API scoped token required to get group information.")
             elif 'groups_token' in tokenResp:
-                return self.getUserInfo(tokenResp['groups_token'], getGroups)
+                return tokenResp['groups_token']
             elif 'auth_token' in tokenResp:
-                return self.getUserInfo(tokenResp['auth_token'], getGroups)
+                return tokenResp['auth_token']
             elif 'transfer_token' in tokenResp:
-                return self.getUserInfo(tokenResp['transfer_token'], getGroups)
+                return tokenResp['transfer_token']
             else:
                 return Response("A valid token was not found in the MAuthorization header") 
         else:
-            return self.getUserInfo(tokenResp, getGroups)
+            return tokenResp        
     
     def getUserInfo(self, token, getGroups = False):
         userInfo = AuthCache.getUserInfo(self.getApplicationKey(), token, getGroups)
@@ -386,7 +561,7 @@ class AuthHelper:
                 if not 'data_provider' in groups_by_id[group_uuid] or not groups_by_id[group_uuid]['data_provider']:
                     raise HTTPException(f"Group {groups_by_id[group_uuid]['displayname']} is not a valid group for submitting data.", 403)
                 #user must be a member of the group or a member of the data admin group
-                elif not (group_uuid in user_info['hmgroupids'] or data_admin_group_uuid in user_info['hmgroupids']):
+                elif not (group_uuid in user_info['hmgroupids'] or (not self.data_admin_group_uuid is None and self.data_admin_group_uuid in user_info['hmgroupids'])):
                     raise HTTPException(f"User is not a member of the group {groups_by_id[group_uuid]['displayname']}", 403)
                 else:
                     return group_uuid
@@ -401,7 +576,7 @@ class AuthHelper:
                     count = count + 1
                     found_group_uuid = grp_id
             if count == 0:
-                if data_admin_group_uuid in user_info['hmgroupids']:
+                if not self.data_admin_group_uuid is None and self.data_admin_group_uuid in user_info['hmgroupids']:
                     raise HTTPException("User is not a member of any groups that can provide data, but is a member of the data admin group. Please specify which group in the group_uuid field")
                 else:
                     raise HTTPException("User is not a member of any groups that can provide data.", 403)
@@ -471,6 +646,9 @@ def identifyGroups(groups):
                 group_obj['data_provider'] = group['data_provider']
             if 'shortname' in group:
                 group_obj['shortname'] = group['shortname']
+            if 'group_type' in group:
+                group_obj['group_type'] = group['group_type']
+
             groupIdByName[group['name'].lower().strip()] = group_obj
             AuthCache.groupsById[group['uuid']] = group_obj
     return groupIdByName
@@ -484,14 +662,18 @@ class AuthCache:
     groupsById = {}
     rolesById = {}
     groupLastRefreshed = None
-    groupJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-globus-groups.json'
     globusGroups = None
     roleJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-globus-roles.json'
     procSecret = None
+    client_id = None
     admin_groups = None
-    processUserFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + 'hubmap-process-user.json'
+    processUserFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + '-process-user.json'
     processUser = None
-         
+    
+    @staticmethod
+    def setClientId(cliId):
+        AuthCache.client_id = cliId
+    
     @staticmethod
     def setProcessSecret(secret):
         if AuthCache.procSecret is None:
@@ -502,20 +684,17 @@ class AuthCache:
         AuthCache.globusGroups = identifyGroups(globusJson)
 
     @staticmethod
-    def getHMGroups():
-        with AuthCache.groupLock:
-            now = datetime.datetime.now()
-            diff = None
-            if AuthCache.groupLastRefreshed is not None:
-                diff = now - AuthCache.groupLastRefreshed
-            if diff is None or diff.days > 0 or diff.seconds > TOKEN_EXPIRATION:
-                if AuthCache.globusGroups is not None:
-                    return AuthCache.globusGroups
-                else:
-                    with open(AuthCache.groupJsonFilename) as jsFile:
-                        groups = json.load(jsFile)
-                        return identifyGroups(groups)
+    def getGlobusGroups():
+        return AuthCache.globusGroups
 
+    @staticmethod
+    def getHMGroups():
+        if AuthCache.globusGroups is not None:
+            return AuthCache.globusGroups
+        else:
+            with open(AuthCache.groupJsonFilename) as jsFile:
+                groups = json.load(jsFile)
+                return identifyGroups(groups)
 
     @staticmethod
     def getHMGroupsById():
@@ -589,13 +768,12 @@ class AuthCache:
     @staticmethod
     def __get_admin_groups():
         if AuthCache.admin_groups is None:
-            #start with hubmap-read group
-            admin_grps = ["5777527e-ec11-11e8-ab41-0af86edb4424", data_admin_group_uuid]
+            admin_grps = []
             all_groups = AuthCache.getHMGroups()
-            #add all data provider groups
+            #add all data provider groups plus any group marked as "group_type" data-read or data-admin
             for grp_name in all_groups.keys():
                 grp = all_groups[grp_name]
-                if 'data_provider' in grp and grp['data_provider']:
+                if ('data_provider' in grp and grp['data_provider']) or ('group_type' in grp and (grp['group_type'] == 'data-read' or grp['group_type'] == 'data-admin')):
                     admin_grps.append(grp)
             AuthCache.admin_groups = admin_grps
         return AuthCache.admin_groups
@@ -661,7 +839,8 @@ class AuthCache:
     def __userInfo(applicationKey, authToken, getGroups=False):
         if authToken == AuthCache.procSecret:
             if AuthCache.processUser is None:
-                with open(AuthCache.processUserFilename) as jsFile:
+                filename = re.sub('-process-user.json$', AuthCache.client_id[0:8] + '-process-user.json', AuthCache.processUserFilename)
+                with open(filename) as jsFile:
                     AuthCache.processUser = json.load(jsFile)
             return AuthCache.processUser
 
@@ -716,5 +895,5 @@ if __name__ == "__main__":
     clientSecret = ''
     token = ''
     helper = AuthHelper.configured_instance(clientId, clientSecret)
-    print(helper.get_write_group_uuid(token, '5bd084c8-edc2-11e8-802f-0e368f3075e8'))
+    print(helper.get_user_write_groups(token))
     
