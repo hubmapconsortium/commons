@@ -16,7 +16,7 @@
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "9203c0d3-18ef-11ed-a284-39992a34a522",
-    "group_type": "regular",
+    "group_type": "protected-data",
     "name": "SenNet-Protected-Data",
     "displayname": "SenNet Protected Data",
     "generateuuid": false
