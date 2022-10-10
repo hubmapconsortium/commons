@@ -16,7 +16,7 @@
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "c0a18357-b036-11ea-96d3-0e2053f596b5",
-    "group_type": "regular",
+    "group_type": "protected-data",
     "name": "HuBMAP-Protected-Data",
     "displayname": "HuBMAP Protected Data",
     "generateuuid": false
