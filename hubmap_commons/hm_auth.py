@@ -318,6 +318,28 @@ class AuthHelper:
             
         return False
 
+    #method, give a user's token, will return a list of groups that the user is a member of with write
+    #privs.  Any group that the user is a member of with a "data_provider" == true attribute is added
+    #to the return list.  If the user isn't a member of any write/data_provider groups an emptly list
+    #is returned
+    #
+    #A Flask Response object is returned in case of an error containing the correct response code and message
+    #that can be returned directly from a WS endpoint
+    def get_user_write_groups(self, groups_token):
+        user_info = self.getUserInfo(groups_token, getGroups=True)
+        if isinstance(user_info, Response):
+            return user_info 
+
+        write_groups = []
+        #loop through all groups that a user is a member of and if any of these groups has "data_provider"
+        #add it to the list of returned groups.
+        groups_by_id = self.getHMGroupsById()
+        for grp_id in user_info['hmgroupids']:
+            if grp_id in groups_by_id and 'data_provider' in groups_by_id[grp_id] and groups_by_id[grp_id]['data_provider'] == True:
+                write_groups.append(groups_by_id[grp_id])
+            
+        return write_groups
+
     #check to see if a user has read privileges
     #the user has read privileges if they are a member of the
     #default read group or if they have write privileges at all per the above has_write_privs method
@@ -873,5 +895,5 @@ if __name__ == "__main__":
     clientSecret = ''
     token = ''
     helper = AuthHelper.configured_instance(clientId, clientSecret)
-    print(helper.get_write_group_uuid(token, '5bd084c8-edc2-11e8-802f-0e368f3075e8'))
+    print(helper.get_user_write_groups(token))
     
