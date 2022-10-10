@@ -169,6 +169,7 @@ class AuthHelper:
         all_groups = AuthCache.getHMGroups()
         self.data_admin_group_uuid = None
         self.data_read_group_uuid = None
+        self.protected_data_group_uuid = None
         for grp_name in all_groups.keys():
             grp = all_groups[grp_name]
             if 'group_type' in grp:
@@ -176,6 +177,8 @@ class AuthHelper:
                     self.data_admin_group_uuid = grp['uuid']
                 elif grp['group_type'] == 'data-read':
                     self.data_read_group_uuid = grp['uuid']
+                elif grp['group_type'] == 'protected-data':
+                    self.protected_data_group_uuid = grp['uuid']
 
         AuthCache.setProcessSecret(re.sub(r'[^a-zA-Z0-9]', '', clientSecret))
         if helperInstance is None:
@@ -521,8 +524,8 @@ class AuthHelper:
             raise exceptions.HTTPException("No valid authorization token found.", 401)
         
         if 'hmgroupids' in user_info:
-            protected_group_id = self.groupNameToId('HUBMAP-PROTECTED-DATA')['uuid']
-            read_id = self.groupNameToId('HuBMAP-READ')['uuid']
+            protected_group_id = self.protected_data_group_uuid
+            read_id = self.data_read_group_uuid
             ids = user_info['hmgroupids']
             if protected_group_id in ids:
                 user_info['data_access_level'] = hubmap_const.HubmapConst.ACCESS_LEVEL_PROTECTED 
