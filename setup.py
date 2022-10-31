@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="hubmap-commons",
-    version="2.1.1",
+    version="2.1.3",
     author="HuBMAP Consortium",
     author_email="api-developers@hubmapconsortium.org",
     description="The common utilities used by the HuMBAP web services",
@@ -17,7 +17,8 @@ setup(
     include_package_data=True,
     install_requires=[
         'Flask>=2.1.3',
-        'jsonref>=0.2',
+        # For now use pinned version of jsonref due to breaking changes made in 1.0.0
+        'jsonref==0.3.0',
         'jsonschema>=3.2.0',
         'neo4j>=4.2.1',
         'pytz>=2021.1',
