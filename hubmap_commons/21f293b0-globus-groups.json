@@ -107,15 +107,15 @@
     "tmc_prefix": "STAN"
   },
   {
-    "description": "Users who have access to the University of Connecticut TMC directory.",
+    "description": "Users who have access to the University of Connecticut and Scripps Institute TMC directory.",
     "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "301615f9-c870-11eb-a8dc-35ce3d8786fe",
     "group_type": "regular",
-    "name": "HuBMAP-UCONN-TMC",
-    "displayname": "TMC - University of Connecticut",
-    "shortname": "TMC - UConn",
+    "name": "HuBMAP-UCONN-SCRIPPS-TMC",
+    "displayname": "TMC - University of Connecticut and Scripps",
+    "shortname": "TMC - UConn - Scripps",
     "generateuuid": true,
     "tmc_prefix": "UCONN"
   },
