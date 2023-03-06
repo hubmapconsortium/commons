@@ -21,7 +21,7 @@ class S3Worker:
             self.aws_s3_bucket_name = theAWS_S3_BUCKET_NAME
             self.aws_object_url_expiration_in_secs = theAWS_OBJECT_URL_EXPIRATION_IN_SECS
         except KeyError as ke:
-            raise Exception("Expected configuration failed to load. See the logs.")
+            raise Exception(f"Expected configuration failed to load {ke} from constructor parameters.")
 
         try:
             self.s3resource = boto3.Session(
@@ -32,7 +32,7 @@ class S3Worker:
             # is entered here rather than another method if configuration is not correct.
             self.s3resource.meta.client.head_bucket(Bucket=self.aws_s3_bucket_name)
         except ClientError as ce:
-            raise Exception("Expected resource failed to load. See the logs.")
+            raise Exception(f"Unable to access S3 Resource. ce={ce} with aws_access_key_id={self.aws_access_key_id}.")
 
 
     # Write an object to the configured bucket
@@ -49,7 +49,7 @@ class S3Worker:
             obj.put(Body=theText)
             return object_key
         except ClientError as ce:
-            raise Exception("Large response creation failed. See the logs.")
+            raise Exception(f"Unable to access S3 Resource. ce={ce} with app_config={app_config}.")
 
     # create a URL which can be used to download an object via http(s)
     # INPUTS:
@@ -65,5 +65,5 @@ class S3Worker:
                                                                           ExpiresIn=self.aws_object_url_expiration_in_secs)
             return response
         except ClientError as ce:
-            raise Exception("Generation of link to large response failed. See the logs.")
+            raise Exception(f"Unable generate URL to {self.aws_s3_bucket_name}. ce={ce}.")
 
