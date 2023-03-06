@@ -15,15 +15,12 @@ class S3Worker:
     #  theAWS_OBJECT_URL_EXPIRATION_IN_SECS- the number of seconds that the object will be downloadable for
     def __init__(self, theAWS_ACCESS_KEY_ID, theAWS_SECRET_ACCESS_KEY, theAWS_S3_BUCKET_NAME, theAWS_OBJECT_URL_EXPIRATION_IN_SECS):
 
-        self.logger = logging.getLogger('uuid.service')
-
         try:
             self.aws_access_key_id = theAWS_ACCESS_KEY_ID
             self.aws_secret_access_key = theAWS_SECRET_ACCESS_KEY
             self.aws_s3_bucket_name = theAWS_S3_BUCKET_NAME
             self.aws_object_url_expiration_in_secs = theAWS_OBJECT_URL_EXPIRATION_IN_SECS
         except KeyError as ke:
-            self.logger.error(f"Expected configuration failed to load {ke} from constructor parameters.")
             raise Exception("Expected configuration failed to load. See the logs.")
 
         try:
@@ -35,10 +32,8 @@ class S3Worker:
             # is entered here rather than another method if configuration is not correct.
             self.s3resource.meta.client.head_bucket(Bucket=self.aws_s3_bucket_name)
         except ClientError as ce:
-            self.logger.error(f"Unable to access S3 Resource. ce={ce} with app_config={app_config}.")
             raise Exception("Expected resource failed to load. See the logs.")
 
-        self.logger.debug(f"self.s3resource={self.s3resource}")
 
     # Write an object to the configured bucket
     # INPUTS:
@@ -54,7 +49,6 @@ class S3Worker:
             obj.put(Body=theText)
             return object_key
         except ClientError as ce:
-            self.logger.error(f"Unable to upload to {self.aws_s3_bucket_name}. ce={ce}.")
             raise Exception("Large response creation failed. See the logs.")
 
     # create a URL which can be used to download an object via http(s)
@@ -69,9 +63,7 @@ class S3Worker:
                                                                           Params={'Bucket': self.aws_s3_bucket_name,
                                                                                   'Key': object_key},
                                                                           ExpiresIn=self.aws_object_url_expiration_in_secs)
-            self.logger.debug(f"presigned url response={response}")
             return response
         except ClientError as ce:
-            self.logger.error(f"Unable generate URL to {self.aws_s3_bucket_name}. ce={ce}.")
             raise Exception("Generation of link to large response failed. See the logs.")
 
