@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="hubmap-commons",
-    version="2.1.9",
+    version="2.1.10",
     author="HuBMAP Consortium",
     author_email="api-developers@hubmapconsortium.org",
     description="The common utilities used by the HuMBAP web services",
@@ -32,7 +32,7 @@ setup(
         # for requests and PyYAML
         'requests>=2.22.0',
         'PyYAML>=5.3.1',
-        'boto3==1.24.47'
+        'boto3>=1.24.47'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
