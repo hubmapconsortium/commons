@@ -115,3 +115,4 @@ venv.bak/
 *.ini
 .DS_Store
 appconfig.py
+.idea/
