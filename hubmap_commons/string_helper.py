@@ -70,17 +70,12 @@ def convert_str_literal(data_str):
             data = ast.literal_eval(data_str)
 
             if isinstance(data, (list, dict)):
-                logger.info(f"The input string literal has been converted to {type(data)} successfully")
                 return data
-            else:
-                logger.info(f"The input string literal is not list or dict after evaluation, return the original string input")
-                return data_str
         except (SyntaxError, ValueError, TypeError) as e:
-            msg = f"Invalid expression (string value): {data_str} to be evaluated by ast.literal_eval()"
-            logger.exception(msg)
-    else:
-        # Skip any non-string data types
-        return data_str
+            # f"Invalid expression (string value): {data_str} to be evaluated by ast.literal_eval()"
+            pass
+    # Skip any non-string data types
+    return data_str
 
 """
 Build the property key-value pairs to be used in the Cypher clause for node creation/update
