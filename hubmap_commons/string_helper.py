@@ -105,54 +105,64 @@ def convert_str_literal(data_str):
     return data_str
 
 """
-Build the property key-value pairs to be used in the Cypher clause for node creation/update
+Convert a List of dictionaries to the format used in the database to store a
+List or dictionary as a string.
 
 Parameters
 ----------
-entity_data_dict : dict
-    The target Entity node to be created
-
-This was copied from:
-https://github.com/hubmapconsortium/entity-api/blob/1aa6c868df25514f8ac2130005d8080f3fbe229a/src/schema/schema_neo4j_queries.py#L1361
+value_obj : a List or a dict
+    The value to be converted to the Python string format used in the database
+    to store dictionaries or Lists as a string.
 
 Returns
 -------
 str
-    A string representation of the node properties map containing
-    key-value pairs to be used in Cypher clause
+    A string representation of the dictionary or List that can be stored as a string in the database
 """
-def build_properties_map(entity_data_dict):
+def convert_py_obj_to_string(value_obj):
     separator = ', '
     node_properties_list = []
 
-    for key, value in entity_data_dict.items():
-        if isinstance(value, (int, bool)):
-            # Treat integer and boolean as is
-            key_value_pair = f"{key}: {value}"
-        elif isinstance(value, str):
-            # Special case is the value is 'TIMESTAMP()' string
-            # Remove the quotes since neo4j only takes TIMESTAMP() as a function
-            if value == 'TIMESTAMP()':
-                key_value_pair = f"{key}: {value}"
+    if isinstance(value_obj, list):
+        str_val = '['
+        first = True
+        for ent in value_obj:
+            if not first:
+                str_val = str_val + separator
             else:
-                # Escape single quote
-                escaped_str = value.replace("'", r"\'")
-                # Quote the value
-                key_value_pair = f"{key}: '{escaped_str}'"
-        else:
-            # Convert list and dict to string, retain the original data without removing any control characters
-            # Will need to call schema_manager.convert_str_literal() to convert the list/dict literal back to object
-            # Note that schema_manager.convert_str_literal() removes any control characters to avoid SyntaxError
-            # Must also escape single quotes in the string to build a valid Cypher query
-            escaped_str = str(value).replace("'", r"\'")
-            # Also need to quote the string value
-            key_value_pair = f"{key}: '{escaped_str}'"
-
-        # Add to the list
-        node_properties_list.append(key_value_pair)
-
-    # Example: {uuid: 'eab7fd6911029122d9bbd4d96116db9b', rui_location: 'Joe <info>', lab_tissue_sample_id: 'dadsadsd'}
-    # Note: all the keys are not quoted, otherwise Cypher syntax error
-    node_properties_map = f"{{ {separator.join(node_properties_list)} }}"
-
-    return node_properties_map
+                first = False
+            str_val = str_val + convert_py_obj_to_string(ent)
+        str_val = str_val + ']'
+        return str_val
+    else:
+        for key, value in value_obj.items():
+            if isinstance(value, (int, bool)):
+                # Treat integer and boolean as is
+                key_value_pair = f"'{key}': {value}"
+            elif isinstance(value, str):
+                # Special case is the value is 'TIMESTAMP()' string
+                # Remove the quotes since neo4j only takes TIMESTAMP() as a function
+                if value == 'TIMESTAMP()':
+                    key_value_pair = f"'{key}': {value}"
+                else:
+                    # Escape single quote
+                    escaped_str = value.replace("'", r"\'")
+                    # Quote the value
+                    key_value_pair = f"'{key}': '{escaped_str}'"
+            else:
+                # Convert list and dict to string, retain the original data without removing any control characters
+                # Will need to call schema_manager.convert_str_literal() to convert the list/dict literal back to object
+                # Note that schema_manager.convert_str_literal() removes any control characters to avoid SyntaxError
+                # Must also escape single quotes in the string to build a valid Cypher query
+                escaped_str = str(value).replace("'", r"\'")
+                # Also need to quote the string value
+                key_value_pair = f"'{key}': '{escaped_str}'"
+    
+            # Add to the list
+            node_properties_list.append(key_value_pair)
+    
+        # Example: {uuid: 'eab7fd6911029122d9bbd4d96116db9b', rui_location: 'Joe <info>', lab_tissue_sample_id: 'dadsadsd'}
+        # Note: all the keys are not quoted, otherwise Cypher syntax error
+        node_properties_map = f"{{ {separator.join(node_properties_list)} }}"
+    
+        return node_properties_map
