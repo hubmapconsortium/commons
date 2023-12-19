@@ -46,6 +46,19 @@
     "tmc_prefix": "TEST"
   },
   {
+    "description": "Users who have access to the CODCC directory.",
+    "data_provider": true,
+    "has_subgroups": false,
+    "identity_set_properties": null,
+    "uuid": "7e9d1666-9b77-11ee-816f-8fb93b8f6d26",
+    "group_type": "regular",
+    "name": "SenNet CODCC",
+    "displayname": "CODCC",
+    "shortname": "CODCC",
+    "generateuuid": false,
+    "tmc_prefix": "CODCC"
+  },
+  {
     "description": "Users who have write access to the Brown University TDA data directory",
     "data_provider": true,
     "has_subgroups": false,
