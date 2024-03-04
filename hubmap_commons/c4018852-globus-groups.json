@@ -189,14 +189,14 @@
     "tmc_prefix": "DUKE"
   },
   {
-    "description": "Users who have write access to the University of Connecticut TMC data directory",
+    "description": "Users who have write access to the UConn Health TMC data directory",
     "data_provider": true,
     "has_subgroups": false,
     "identity_set_properties": null,
     "uuid": "d3281bed-ed89-11ec-b03c-67218ab1b594",
     "group_type": "regular",
     "name": "SenNet TMC UConn",
-    "displayname": "University of Connecticut TMC",
+    "displayname": "UConn Health TMC",
     "shortname": "TMC - UConn",
     "generateuuid": true,
     "tmc_prefix": "UCONN"
