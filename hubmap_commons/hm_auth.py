@@ -465,6 +465,8 @@ class AuthHelper:
             return tokenResp        
     
     def getUserInfo(self, token, getGroups = False):
+        if token is None or token.strip() == '':
+            return Response("Auth token required", 400)
         userInfo = AuthCache.getUserInfo(self.getApplicationKey(), token, getGroups)
         
         if isinstance(userInfo, Response):
