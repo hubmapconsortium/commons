@@ -190,7 +190,7 @@ class AuthHelper:
 
     def get_globus_groups_info(self):
         groups = AuthCache.globusGroups
-    
+
         groups_by_id = {}
         groups_by_name = {}
         groups_by_tmc_prefix = {}
@@ -225,7 +225,11 @@ class AuthHelper:
                 'generateuuid': group['generateuuid'],
                 'data_provider': group['data_provider']
             }
-    
+
+            # Key "description" is optional
+            if 'description' in group:
+                group_obj['description'] = group['description']
+
             # Key "tmc_prefix" is optional
             if 'tmc_prefix' in group:
                 group_obj['tmc_prefix'] = group['tmc_prefix']
@@ -645,6 +649,8 @@ def identifyGroups(groups):
                          'displayname': group['displayname'], 'generateuuid': group['generateuuid']}
             if 'tmc_prefix' in group:
                 group_obj['tmc_prefix'] = group['tmc_prefix']
+            if 'description' in group:
+                group_obj['description'] = group['description']
             if 'data_provider' in group:
                 group_obj['data_provider'] = group['data_provider']
             if 'shortname' in group:
