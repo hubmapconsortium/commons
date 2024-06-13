@@ -586,7 +586,7 @@
     "tmc_prefix": "DPUIC"
   },
   {
-    "description": "This group will be used to maintain a listo f users with access to the Beta phase of the Workspaces release.",
+    "description": "This group will be used to maintain a list of users with access to the Beta phase of the Workspaces release.",
     "name": "HuBMAP-Workspaces-Beta",
     "uuid": "fb09d4dd-da04-11ed-b5f2-b5fe535477fb",
     "displayname": "Workspaces Beta",
