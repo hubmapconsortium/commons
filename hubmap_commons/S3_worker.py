@@ -9,17 +9,31 @@ from botocore.exceptions import ClientError
 class S3Worker:
 
     #create an instance of the S3Worker, requred initialization paramerters are:
-    #  theAWS_ACCESS_KEY_ID- the id of an AWS access id/key pair with access to write to a public S3 bucket
-    #  theAWS_SECRET_ACCESS_KEY_KEY- the secret/key side of the AWS access id/key pair with access to write to a public S3 bucket
-    #  theAWS_BUCKET_NAME- the name of the AWS S3 bucket where the results/obect will be stashed
-    #  theAWS_OBJECT_URL_EXPIRATION_IN_SECS- the number of seconds that the object will be downloadable for
-    def __init__(self, theAWS_ACCESS_KEY_ID, theAWS_SECRET_ACCESS_KEY, theAWS_S3_BUCKET_NAME, theAWS_OBJECT_URL_EXPIRATION_IN_SECS):
+    # ACCESS_KEY_ID- the id of an AWS access id/key pair with access to write to a public S3 bucket
+    # SECRET_ACCESS_KEY- the secret/key side of the AWS access id/key pair with access to write to a public S3 bucket
+    # S3_BUCKET_NAME- the name of the AWS S3 bucket where the results/obect will be stashed
+    # S3_OBJECT_URL_EXPIRATION_IN_SECS- the number of seconds that the object will be downloadable for
+    # LARGE_RESPONSE_THRESHOLD - number of bytes of a maximum service Response, above which the
+    #                            response will be stored as an Object in the S3 Bucket, and
+    #                            a URL will be returned.
+    # SERVICE_S3_OBJ_PREFIX - A prefix used to name objects for this service within the
+    #                         AWS S3 Bucket shared by the services. The name
+    #                         of Objects in the Bucket is not relevant to the service user.
+    def __init__(self, ACCESS_KEY_ID, SECRET_ACCESS_KEY
+                 , S3_BUCKET_NAME, S3_OBJECT_URL_EXPIRATION_IN_SECS
+                 , LARGE_RESPONSE_THRESHOLD, SERVICE_S3_OBJ_PREFIX):
 
         try:
-            self.aws_access_key_id = theAWS_ACCESS_KEY_ID
-            self.aws_secret_access_key = theAWS_SECRET_ACCESS_KEY
-            self.aws_s3_bucket_name = theAWS_S3_BUCKET_NAME
-            self.aws_object_url_expiration_in_secs = theAWS_OBJECT_URL_EXPIRATION_IN_SECS
+            self.aws_access_key_id = ACCESS_KEY_ID
+            self.aws_secret_access_key = SECRET_ACCESS_KEY
+            self.aws_s3_bucket_name = S3_BUCKET_NAME
+            self.s3_object_url_expiration_in_secs = S3_OBJECT_URL_EXPIRATION_IN_SECS
+            self.large_response_threshold = LARGE_RESPONSE_THRESHOLD
+            self.service_s3_obj_prefix = SERVICE_S3_OBJ_PREFIX
+            if self.large_response_threshold > 10*(2**20):
+                raise Exception(f"Cannot initialize an S3Worker instance with a"
+                                f" large response threshold of {LARGE_RESPONSE_THRESHOLD},"
+                                f" since this above AWS Gateway API limit of {10*(2**20)}.")
         except KeyError as ke:
             raise Exception(f"Expected configuration failed to load {ke} from constructor parameters.")
 
@@ -33,7 +47,6 @@ class S3Worker:
             self.s3resource.meta.client.head_bucket(Bucket=self.aws_s3_bucket_name)
         except ClientError as ce:
             raise Exception(f"Unable to access S3 Resource. ce={ce} with aws_access_key_id={self.aws_access_key_id}.")
-
 
     # Write an object to the configured bucket
     # INPUTS:
@@ -62,8 +75,29 @@ class S3Worker:
             response = self.s3resource.meta.client.generate_presigned_url('get_object',
                                                                           Params={'Bucket': self.aws_s3_bucket_name,
                                                                                   'Key': object_key},
-                                                                          ExpiresIn=self.aws_object_url_expiration_in_secs)
+                                                                          ExpiresIn=self.s3_object_url_expiration_in_secs)
             return response
         except ClientError as ce:
             raise Exception(f"Unable generate URL to {self.aws_s3_bucket_name}. ce={ce}.")
 
+    # If the size of the response_body above the limit the service which instantiated this
+    # S3Worker is configured to return, stash response_body text in the S3 Bucket which this
+    # S3Worker was initialized to use. Return a URL for the S3 Object, which is valid until
+    # it expires.
+    def stash_response_body_if_big(self, response_body:str):
+        # Since the calling service passed in a dictionary of settings for AWS S3, stash
+        # any large responses there.  Otherwise, allow the response to be returned directly
+        # as this function exits.
+        if len(response_body) >= self.large_response_threshold:
+            try:
+                obj_key = self.stash_text_as_object(  response_body
+                                                      , self.service_s3_obj_prefix)
+                aws_presigned_url = self.create_URL_for_object(obj_key)
+                return aws_presigned_url
+            except Exception as s3exception:
+                logger.error(   f"Error getting anS3Worker to handle len(response_body)="
+                                f"{len(response_body)}.")
+                logger.error(s3exception, exc_info=True)
+                raise(f"Unexpected error storing large results in S3. See logs.")
+        else:
+            return None
