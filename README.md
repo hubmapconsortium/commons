@@ -52,3 +52,5 @@ The code includes:
 * **test_ws.py** contains a test Web Service.  This service can be run by copying hubmap_commons/common_app.conf.example to hubmap_commons/common_app.conf and providing a Globus client id and secret (available at https://developers.globus.org) then directly running test_ws.py from the hubmap_commons/ directory.  The service has a useful /login method that can be used to generate Globus auth tokens for testing.  Note: For much of HuBMAP a Globus "nexus" token used to access the globus Nexus APIs.  To generate a nexus token the Client ID must be authorized for this.  Client IDs are available from the developers of this repository to generate nexus tokens for use against HuBMAP APIs.
 
 * **~~uuid_generator.py~~(deprecated)** this is a wrapper for calls to the /hmuuid Web Service
+
+* **~~type_cliet.py~~(deprecated and removed)** provides a singleton client for retrieving information about different assay types
