@@ -170,6 +170,7 @@ class AuthHelper:
         self.data_admin_group_uuid = None
         self.data_read_group_uuid = None
         self.protected_data_group_uuid = None
+        self.pipeline_testing_group_uuid = None
         for grp_name in all_groups.keys():
             grp = all_groups[grp_name]
             if 'group_type' in grp:
@@ -179,6 +180,8 @@ class AuthHelper:
                     self.data_read_group_uuid = grp['uuid']
                 elif grp['group_type'] == 'protected-data':
                     self.protected_data_group_uuid = grp['uuid']
+                elif grp['group_type'] == 'pipeline-testing':
+                    self.pipeline_testing_group_uuid = grp['uuid']
 
         AuthCache.setProcessSecret(re.sub(r'[^a-zA-Z0-9]', '', clientSecret))
         if helperInstance is None:
@@ -357,6 +360,18 @@ class AuthHelper:
         if not self.data_read_group_uuid is None and self.data_read_group_uuid in user_info['hmgroupids']:
             return True
         return self.has_write_privs(groups_token)
+
+    #check to see if a user is allowed to submit jobs to the testing pipeline
+    #users are allowed if they are a member of the "Pipeline Testing" group or
+    #if they are a member of the "Data Admin" group
+    def has_pipeline_testing_privs(self, groups_token):
+        user_info = self.getUserInfo(groups_token, getGroups = True)
+        if isinstance(user_info, Response):
+            return user_info
+        if (not self.pipeline_testing_group_uuid is None and self.pipeline_testing_group_uuid in user_info['hmgroupids']) or (not self.data_admin_group_uuid is None and self.data_admin_group_uuid in user_info['hmgroupids']):
+            return True
+        else:
+            return False
 
     def get_default_read_group_uuid(self):
         return self.data_read_group_uuid

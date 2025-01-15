@@ -382,5 +382,14 @@
 		"shortname": "TMC - Yale - Fan",
 		"generateuuid": true,
 		"tmc_prefix": "YALE1"
+	},
+	{
+		"description": "This group gives members access to the SenNet pipeline testing facility.",
+		"name": "SenNet-Pipeline-Testing",
+		"uuid": "78dedea4-d293-11ef-80ba-178fd5b923bd",
+		"displayname": "Pipeline Testing",
+		"group_type": "pipeline-testing",
+		"generateuuid": false,
+		"data_provider": false
 	}
 ]
