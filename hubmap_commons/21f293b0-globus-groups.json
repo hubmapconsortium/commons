@@ -592,6 +592,15 @@
     "displayname": "Workspaces Beta",
     "generateuuid": false,
     "data_provider": false
+  },
+  {
+    "description": "This group gives members access to the HuBMAP pipeline testing facility.",
+    "name": "HuBMAP-Pipeline-Testing",
+    "uuid": "3e5bc7c0-d292-11ef-8694-9f2bd25b4aac",
+    "displayname": "Pipeline Testing",
+    "group_type": "pipeline-testing",
+    "generateuuid": false,
+    "data_provider": false
   }
 ]
 
