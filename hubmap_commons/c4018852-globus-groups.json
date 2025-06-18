@@ -306,15 +306,15 @@
 		"tmc_prefix": "UCSD"
 	},
 	{
-		"description": "Users who have write access to the SenNet University of Minnesota - Bernlohr TMC  data directory",
+		"description": "Users who have write access to the SenNet University of Minnesota - Robbins TMC  data directory",
 		"data_provider": true,
 		"has_subgroups": false,
 		"identity_set_properties": null,
 		"uuid": "d6033e1f-23a8-11ed-b83a-972795fc9504",
 		"group_type": "regular",
-		"name": "SenNet TMC UMinn - Bernlohr",
-		"displayname": "TMC - University of Minnesota - Bernlohr",
-		"shortname": "TMC - UMinn - Bernlohr",
+		"name": "SenNet TMC UMinn - Robbins",
+		"displayname": "TMC - University of Minnesota - Robbins",
+		"shortname": "TMC - UMinn - Robbins",
 		"generateuuid": true,
 		"tmc_prefix": "UMINN2"
 	},
