@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from hubmap_commons import string_helper
 from flask import Response
 
@@ -492,7 +494,7 @@ class AuthHelper:
         if not isinstance(userInfo, dict) or not 'active' in userInfo or userInfo['active'] is None:
             return Response("Nonactive or invalid auth token", 401)
         
-        return userInfo
+        return deepcopy(userInfo)
     
     def groupNameToId(self, name):
         tName = name.lower().strip()
