@@ -655,6 +655,8 @@ class AuthHelper:
                     break
         return return_list
 
+    def get_protected_data_group_uuid(self):
+        return self.protected_data_group_uuid
 
 def identifyGroups(groups):
     groupIdByName = {}
