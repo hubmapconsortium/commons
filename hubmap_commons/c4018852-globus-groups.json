@@ -391,5 +391,15 @@
 		"group_type": "pipeline-testing",
 		"generateuuid": false,
 		"data_provider": false
+	},
+	{
+		"description": "This group gives members access to the Senotype Editor application.",
+		"name": "Senotype Edit",
+		"uuid": "c43c14da-0b51-11f1-a6c4-0e71192eda6f",
+		"displayname": "Senotype Edit",
+		"group_type": "senotype-edit",
+		"generateuuid": true,
+		"data_provider": false,
+		"uuid-write": true
 	}
 ]
