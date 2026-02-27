@@ -28,7 +28,7 @@ ALL_GROUP_SCOPES = [GLOBUS_GROUPS_API_SCOPE_ALL, GLOBUS_GROUPS_API_SCOPE_PART]
 #created.
 helperInstance = None
 
-def secured(func=None, groups=None, scopes=None, has_read=False, has_write=False):
+def secured(func=None, groups=None, scopes=None, has_read=False, has_write=False, has_uuid_write=False):
     def secured_decorator(func):
         @functools.wraps(func)
         def secured_inner(*args, **kwargs):
@@ -73,6 +73,14 @@ def secured(func=None, groups=None, scopes=None, has_read=False, has_write=False
                     return(check_write)
                 if check_write == False:
                     msg = "User does not have required write privileges, must be a member of any data-provider group or the data-admin group"
+                    return Response(msg, 403)
+
+            if has_uuid_write == True:
+                check_uuid_write = helperInstance.has_uuid_write_privs(user_token)
+                if isinstance(check_uuid_write, Response):
+                    return(check_uuid_write)
+                if check_uuid_write == False:
+                    msg = "User does not have required write privileges for the UUID API, must be a member of any data-provider group, the data-admin group, or a group with 'uuid_write' privileges"
                     return Response(msg, 403)
     
             #check for group access
@@ -317,6 +325,26 @@ class AuthHelper:
             if grp_id in groups_by_id and 'data_provider' in groups_by_id[grp_id] and groups_by_id[grp_id]['data_provider'] == True:
                 return True
             
+        return False
+
+    # method to check to see if a user has uuid write privileges (currently used by the UUID API for the SenNet Senotype Editor)
+    # user (via token) must have membership in any group with a "data_provider" == true attribute,
+    # a member of a group with type data-admin, or a "uuid_write" == true attribute
+    def has_uuid_write_privs(self, groups_token):
+        if self.has_write_privs(groups_token):
+            return True
+
+        user_info = self.getUserInfo(groups_token, getGroups=True)
+        if isinstance(user_info, Response):
+            return user_info
+
+        # loop through all groups that a user is a member of and if any of these groups has "uuid_write" set to true, the user has write privs
+        groups_by_id = self.getHMGroupsById()
+        for grp_id in user_info['hmgroupids']:
+            if grp_id in groups_by_id and 'uuid_write' in groups_by_id[grp_id] and groups_by_id[grp_id][
+                'uuid_write'] == True:
+                return True
+
         return False
     
     #method to check to see if a user is a member of a group with type data-admin
