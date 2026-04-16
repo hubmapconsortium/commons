@@ -23,7 +23,7 @@ GLOBUS_GROUPS_API_SCOPE_ALL = 'urn:globus:auth:scope:groups.api.globus.org:all'
 GLOBUS_GROUPS_API_SCOPE_PART = 'urn:globus:auth:scope:groups.api.globus.org:view_my_groups_and_memberships'
 ALL_GROUP_SCOPES = [GLOBUS_GROUPS_API_SCOPE_ALL, GLOBUS_GROUPS_API_SCOPE_PART]
 
-#this is only used by the secured decorator below as it needs access 
+#this is only used by the secured decorator below as it needs access
 #to client information.  It is initialized the first time an AuthHelper is
 #created.
 helperInstance = None
@@ -33,21 +33,21 @@ def secured(func=None, groups=None, scopes=None, has_read=False, has_write=False
         @functools.wraps(func)
         def secured_inner(*args, **kwargs):
             if helperInstance is None:
-                return Response("Error checking security credentials.  A valid auth worker not found.  Make sure you create a hm_auth.AuthHelper during service initialization", 500)            
+                return Response("Error checking security credentials.  A valid auth worker not found.  Make sure you create a hm_auth.AuthHelper during service initialization", 500)
             hasGroups = groups is not None or has_read or has_write
 
             #make sure we have a valid, active auth token
             user_token = helperInstance.getUserTokenFromRequest(flask.request, hasGroups)
             if isinstance(user_token, Response):
                 return user_token
-            
+
             userInfo = helperInstance.getUserInfo(user_token, hasGroups)
             if isinstance(userInfo, Response):
                 return userInfo
-            
+
             sys_acct = False
-            if "is_system_account" in userInfo: sys_acct = userInfo['is_system_account'] 
-            
+            if "is_system_account" in userInfo: sys_acct = userInfo['is_system_account']
+
             #check that auth is in required scope
             if hasGroups and sys_acct is False:
                 in_scope = False
@@ -58,7 +58,7 @@ def secured(func=None, groups=None, scopes=None, has_read=False, has_write=False
                 if not in_scope:
                     msg = "Not in one of user scopes " + ",".join(ALL_GROUP_SCOPES) + " which is required for access to user groups"
                     return Response(msg, 403)
-            
+
             if has_read == True:
                 check_read = helperInstance.has_read_privs(user_token)
                 if isinstance(check_read, Response):
@@ -66,7 +66,7 @@ def secured(func=None, groups=None, scopes=None, has_read=False, has_write=False
                 if check_read == False:
                     msg = "User does not have read privileges, must be member of a data-provider group or the default data-read group"
                     return Response(msg, 403)
-            
+
             if has_write == True:
                 check_write = helperInstance.has_write_privs(user_token)
                 if isinstance(check_write, Response):
@@ -82,7 +82,7 @@ def secured(func=None, groups=None, scopes=None, has_read=False, has_write=False
                 if check_uuid_write == False:
                     msg = "User does not have required write privileges for the UUID API, must be a member of any data-provider group, the data-admin group, or a group with 'uuid_write' privileges"
                     return Response(msg, 403)
-    
+
             #check for group access
             if groups is not None:
                 if isinstance(groups, list): tGroups = groups
@@ -131,21 +131,21 @@ class AuthHelper:
         if helperInstance is not None:
             raise Exception("An instance of AuthHelper exists already.  Use the AuthHelper.instance method to retrieve it.")
         return AuthHelper(clientId, clientSecret)
-    
+
     @staticmethod
     def instance():
         if helperInstance is None:
             raise Exception("An instance of AuthHelper does not yet exist.  Use AuthHelper.create(...) to create a new instance")
         return helperInstance
-    
+
     @staticmethod
     def isInitialized():
         return(helperInstance is not None)
-    
+
     @staticmethod
     def getHuBMAPGroupInfo():
         return(AuthCache.getHMGroups())
-    
+
     @staticmethod
     def getHMGroupsById():
         return(AuthCache.getHMGroupsById())
@@ -162,15 +162,15 @@ class AuthHelper:
 
         if helperInstance is not None:
             raise Exception("An instance of singleton AuthHelper exists already.  Use AuthHelper.instance() to retrieve it")
-        
+
         if clientId is None or clientSecret is None or string_helper.isBlank(clientId) or string_helper.isBlank(clientSecret):
             raise Exception("Globus client id and secret are required in AuthHelper")
-        
+
         self.applicationClientId = clientId.strip()
         self.applicationClientSecret = clientSecret
         group_filename_prefix = self.applicationClientId[0:8]
         self.groupJsonFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + group_filename_prefix + baseGroupFilename
-        
+
         with open(self.groupJsonFilename) as jsFile:
             groups = json.load(jsFile)
             AuthCache.setGlobusGroups(groups)
@@ -196,7 +196,7 @@ class AuthHelper:
         AuthCache.setProcessSecret(re.sub(r'[^a-zA-Z0-9]', '', clientSecret))
         if helperInstance is None:
             helperInstance = self
-            
+
         AuthCache.setClientId(clientId)
 
 
@@ -207,11 +207,11 @@ class AuthHelper:
         groups_by_id = {}
         groups_by_name = {}
         groups_by_tmc_prefix = {}
-    
+
         required_keys = ['name', 'uuid', 'generateuuid', 'displayname', 'data_provider']
         non_empty_keys = ['name', 'displayname']
         boolean_keys = ['data_provider']
-    
+
         for group_key in groups.keys():
             group = groups[group_key]
             # A bit data integrity check
@@ -219,17 +219,17 @@ class AuthHelper:
                 if key not in group:
                     msg = f'Key "{key}" is required for each object in the globus groups json file'
                     raise KeyError(msg)
-    
+
             for key in non_empty_keys:
                 if string_helper.isBlank(group[key]):
                     msg = f'The value of key "{key}" can not be empty string in each object in the globus groups json file'
                     raise ValueError(msg)
-    
+
             for key in boolean_keys:
                 if not isinstance(group[key], bool):
                     msg = f'The value of key "{key}" must be a boolean in each object in the globus groups json file'
                     raise ValueError(msg)
-    
+
             # By now all the checks passed, we are good for the business
             group_obj = {
                 'name' : group['name'].lower().strip(),
@@ -239,6 +239,10 @@ class AuthHelper:
                 'data_provider': group['data_provider']
             }
 
+            # key "uuid_write" is optional
+            if 'uuid_write' in group:
+                group_obj['uuid_write'] = group['uuid_write']
+
             # Key "description" is optional
             if 'description' in group:
                 group_obj['description'] = group['description']
@@ -246,17 +250,17 @@ class AuthHelper:
             # Key "tmc_prefix" is optional
             if 'tmc_prefix' in group:
                 group_obj['tmc_prefix'] = group['tmc_prefix']
-    
+
                 group_info = {}
                 group_info['uuid'] = group['uuid'].lower().strip()
                 group_info['displayname'] = group['displayname']
                 group_info['tmc_prefix'] = group['tmc_prefix']
-    
+
                 groups_by_tmc_prefix[group['tmc_prefix'].upper().strip()] = group_info
-    
+
             groups_by_name[group['name'].lower().strip()] = group_obj
             groups_by_id[group['uuid']] = group_obj
-    
+
         # Wrap the final data
         globus_groups = {
             'by_id': groups_by_id,
@@ -265,7 +269,7 @@ class AuthHelper:
         }
         return globus_groups
 
-            
+
     #method to check if an auth token has write privileges
     #for a given group
     #
@@ -289,14 +293,14 @@ class AuthHelper:
         user_info = self.getUserInfo(groups_token, getGroups=True)
         if isinstance(user_info, Response):
             raise HTTPException(user_info.text, user_info.status_code)
-        
+
         groups_by_id = self.getHMGroupsById()
         if not group_uuid in groups_by_id:
             raise HTTPException(f"{group_uuid} is not a valid group uuid", 400)
         grp = groups_by_id[group_uuid]
         if not 'data_provider' in grp or not grp['data_provider']:
             raise HTTPException(f"grop with uuid {group_uuid} is not a valid data provider group", 400)
-        
+
         if 'hmgroupids' in user_info:
             if not self.data_admin_group_uuid is None and self.data_admin_group_uuid in user_info['hmgroupids']:
                 return True
@@ -306,25 +310,25 @@ class AuthHelper:
                 return True
         else:
             raise HTTPException("User is not authorized, no group membership", 403)
-    
+
     #method to check to see if a user has any write privileges at all
     #user (via token) must have membership in any group with a "data_provider" == true attribute or
     #a member of a group with type data-admin
     def has_write_privs(self, groups_token):
         user_info = self.getUserInfo(groups_token, getGroups=True)
         if isinstance(user_info, Response):
-            return user_info 
+            return user_info
 
-        #if the user is a member of the data-admin group, they have write privs        
+        #if the user is a member of the data-admin group, they have write privs
         if not self.data_admin_group_uuid is None and self.data_admin_group_uuid in user_info['hmgroupids']:
             return True
-        
+
         #loop through all groups that a user is a member of and if any of these groups has "data_provider" set to true, the user has write privs
         groups_by_id = self.getHMGroupsById()
         for grp_id in user_info['hmgroupids']:
             if grp_id in groups_by_id and 'data_provider' in groups_by_id[grp_id] and groups_by_id[grp_id]['data_provider'] == True:
                 return True
-            
+
         return False
 
     # method to check to see if a user has uuid write privileges (currently used by the UUID API for the SenNet Senotype Editor)
@@ -345,16 +349,16 @@ class AuthHelper:
                 return True
 
         return False
-    
+
     #method to check to see if a user is a member of a group with type data-admin
     def has_data_admin_privs(self, groups_token):
         user_info = self.getUserInfo(groups_token, getGroups=True)
         if isinstance(user_info, Response):
-            return user_info 
-        
+            return user_info
+
         if not self.data_admin_group_uuid is None and self.data_admin_group_uuid in user_info['hmgroupids']:
             return True
-            
+
         return False
 
     #method, give a user's token, will return a list of groups that the user is a member of with write
@@ -367,7 +371,7 @@ class AuthHelper:
     def get_user_write_groups(self, groups_token):
         user_info = self.getUserInfo(groups_token, getGroups=True)
         if isinstance(user_info, Response):
-            return user_info 
+            return user_info
 
         write_groups = []
         #loop through all groups that a user is a member of and if any of these groups has "data_provider"
@@ -376,7 +380,7 @@ class AuthHelper:
         for grp_id in user_info['hmgroupids']:
             if grp_id in groups_by_id and 'data_provider' in groups_by_id[grp_id] and groups_by_id[grp_id]['data_provider'] == True:
                 write_groups.append(groups_by_id[grp_id])
-            
+
         return write_groups
 
     #check to see if a user has read privileges
@@ -404,7 +408,7 @@ class AuthHelper:
 
     def get_default_read_group_uuid(self):
         return self.data_read_group_uuid
-    
+
     def getProcessSecret(self):
         return AuthCache.procSecret
 
@@ -413,7 +417,7 @@ class AuthHelper:
         hasAuth=False
         if 'Mauthorization' in requestHeaders: hasMauth=True
         if 'Authorization' in requestHeaders: hasAuth=True
-        
+
         if hasMauth:
             mauthHeader = requestHeaders['Mauthorization']
             if string_helper.isBlank(mauthHeader):
@@ -428,9 +432,9 @@ class AuthHelper:
                 tokens = json.loads(jsonTokens)
             except Exception as e:
                 print("ERROR!: " + str(e))
-                return Response("Error decoding json included in Mauthorization header", 401)    
+                return Response("Error decoding json included in Mauthorization header", 401)
             return tokens
-        
+
         elif hasAuth:
             authHeader = requestHeaders['Authorization']
             if string_helper.isBlank(authHeader):
@@ -453,7 +457,7 @@ class AuthHelper:
         hasAuth=False
         if 'Mauthorization' in requestHeaders: hasMauth=True
         if 'Authorization' in requestHeaders: hasAuth=True
-        
+
         if hasMauth:
             mauthHeader = requestHeaders['Mauthorization']
             if string_helper.isBlank(mauthHeader):
@@ -467,9 +471,9 @@ class AuthHelper:
             try:
                 tokens = json.loads(jsonTokens)
             except Exception as e:
-                raise ValueError("Error decoding json included in Mauthorization header")    
+                raise ValueError("Error decoding json included in Mauthorization header")
             return tokens
-        
+
         elif hasAuth:
             authHeader = requestHeaders['Authorization']
             if string_helper.isBlank(authHeader):
@@ -485,14 +489,14 @@ class AuthHelper:
             return(token)
         else:
             raise ValueError('No Authorization header')
-    
+
     def getUserInfoUsingRequest(self, httpReq, getGroups = False):
         token = self.getUserTokenFromRequest(httpReq, getGroups)
         if isinstance(token, Response):
             return token;
 
         return self.getUserInfo(token, getGroups)
-    
+
     def getUserTokenFromRequest(self, httpReq, getGroups):
         tokenResp = self.getAuthorizationTokens(httpReq.headers)
         if isinstance(tokenResp, Response):
@@ -508,21 +512,21 @@ class AuthHelper:
             elif 'transfer_token' in tokenResp:
                 return tokenResp['transfer_token']
             else:
-                return Response("A valid token was not found in the MAuthorization header") 
+                return Response("A valid token was not found in the MAuthorization header")
         else:
-            return tokenResp        
-    
+            return tokenResp
+
     def getUserInfo(self, token, getGroups = False):
         userInfo = AuthCache.getUserInfo(self.getApplicationKey(), token, getGroups)
-        
+
         if isinstance(userInfo, Response):
             return userInfo
-                
+
         if not isinstance(userInfo, dict) or not 'active' in userInfo or userInfo['active'] is None:
             return Response("Nonactive or invalid auth token", 401)
-        
+
         return deepcopy(userInfo)
-    
+
     def groupNameToId(self, name):
         tName = name.lower().strip()
         groups = AuthCache.getHMGroups()
@@ -530,10 +534,10 @@ class AuthHelper:
             return groups[tName]
         else:
             return None
-            
+
     def getApplicationKey(self):
         return base64.b64encode(bytes(self.applicationClientId + ':' + self.applicationClientSecret, 'utf-8')).decode('utf-8')
-            
+
 
 
     #get the highest level access level given the token embedded in the HTTP request
@@ -558,32 +562,32 @@ class AuthHelper:
             if 'groups_token' in tokenResp:
                 user_info = self.getUserInfo(tokenResp['groups_token'], True)
             elif 'auth_token' in tokenResp:
-                user_info = self.getUserInfo(tokenResp['auth_token'], False) 
+                user_info = self.getUserInfo(tokenResp['auth_token'], False)
             elif 'transfer_token' in tokenResp:
                 user_info = self.getUserInfo(tokenResp['transfer_token'], False)
             else:
-                raise exceptions.HTTPException("No valid tokens found in MAuthorization Header", 401) 
+                raise exceptions.HTTPException("No valid tokens found in MAuthorization Header", 401)
         else:
             user_info = self.getUserInfo(tokenResp, True)
             if isinstance(user_info, Response):
                 user_info = self.getUserInfo(tokenResp, False)
-        
+
         if user_info is None or isinstance(user_info, Response):
             raise exceptions.HTTPException("No valid authorization token found.", 401)
-        
+
         if 'hmgroupids' in user_info:
             protected_group_id = self.protected_data_group_uuid
             read_id = self.data_read_group_uuid
             ids = user_info['hmgroupids']
             if protected_group_id in ids:
-                user_info['data_access_level'] = hubmap_const.HubmapConst.ACCESS_LEVEL_PROTECTED 
+                user_info['data_access_level'] = hubmap_const.HubmapConst.ACCESS_LEVEL_PROTECTED
             elif read_id in ids:
                 user_info['data_access_level'] = hubmap_const.HubmapConst.ACCESS_LEVEL_CONSORTIUM
             else:
                 user_info['data_access_level'] = hubmap_const.HubmapConst.ACCESS_LEVEL_PUBLIC
         else:
             user_info['data_access_level'] = hubmap_const.HubmapConst.ACCESS_LEVEL_PUBLIC
-            
+
         return user_info
 
     #checks to see if the user identified by the Groups API scoped token in the request
@@ -595,18 +599,18 @@ class AuthHelper:
     #which can be easily handled to return a good error Response
     #for a web service method
     def get_write_group_uuid(self, request_or_token, group_uuid = None):
-        if isinstance(request_or_token, str): 
+        if isinstance(request_or_token, str):
             user_info = self.getUserInfo(request_or_token, getGroups=True)
         else:
             user_info = self.getUserInfoUsingRequest(request_or_token, getGroups=True)
 
         if isinstance(user_info, Response):
             raise HTTPException("Error while getting user information from token. " + user_info.get_data(as_text=True), user_info.status_code)
-        
+
         if len(AuthCache.groupsById) == 0:
             AuthCache.getHMGroups()
         groups_by_id = AuthCache.groupsById
-        
+
         if not group_uuid is None:
             if group_uuid in groups_by_id:
                 if not 'data_provider' in groups_by_id[group_uuid] or not groups_by_id[group_uuid]['data_provider']:
@@ -617,7 +621,7 @@ class AuthHelper:
                 else:
                     return group_uuid
             else:
-                raise HTTPException("Invalid group_uuid", 400) 
+                raise HTTPException("Invalid group_uuid", 400)
         else:
             count = 0
             found_group_uuid = None
@@ -635,7 +639,7 @@ class AuthHelper:
                 raise HTTPException("The user is a member of multiple groups that can provide data.  Please specify which group in the group_uuid field", 400)
             else:
                 return found_group_uuid
-                    
+
     def get_user_groups_deprecated(self, token):
         authcache = None
         if AuthHelper.isInitialized() == False:
@@ -644,10 +648,10 @@ class AuthHelper:
         else:
             authcache = AuthHelper.instance()
         userinfo = authcache.getUserInfo(token, True)
-    
+
         if type(userinfo) == Response and userinfo.status_code == 401:
             raise HTTPException('token is invalid.', 401)
-    
+
         if 'hmgroupids' not in userinfo:
             raise ValueError("Cannot find Hubmap Group information for token")
         return_list = []
@@ -703,6 +707,8 @@ def identifyGroups(groups):
                 group_obj['shortname'] = group['shortname']
             if 'group_type' in group:
                 group_obj['group_type'] = group['group_type']
+            if 'uuid_write' in group:
+                group_obj['uuid_write'] = group['uuid_write']
 
             groupIdByName[group['name'].lower().strip()] = group_obj
             AuthCache.groupsById[group['uuid']] = group_obj
@@ -724,11 +730,11 @@ class AuthCache:
     admin_groups = None
     processUserFilename = file_helper.ensureTrailingSlash(os.path.dirname(os.path.realpath(__file__))) + '-process-user.json'
     processUser = None
-    
+
     @staticmethod
     def setClientId(cliId):
         AuthCache.client_id = cliId
-    
+
     @staticmethod
     def setProcessSecret(secret):
         if AuthCache.procSecret is None:
@@ -756,7 +762,7 @@ class AuthCache:
         if len(AuthCache.groupsById) == 0:
             AuthCache.getHMGroups()
         return(AuthCache.groupsById)
-    
+
     @staticmethod
     def getHMRoles():
         with AuthCache.groupLock:
@@ -765,8 +771,8 @@ class AuthCache:
             if AuthCache.groupLastRefreshed is not None:
                 diff = now - AuthCache.groupLastRefreshed
             if diff is None or diff.days > 0 or diff.seconds > TOKEN_EXPIRATION:
-                roleIdByName = {}                    
-                #rolesById = {}                    
+                roleIdByName = {}
+                #rolesById = {}
                 with open(AuthCache.roleJsonFilename) as jsFile:
                     roles = json.load(jsFile)
                     for role in roles:
@@ -780,7 +786,7 @@ class AuthCache:
     @staticmethod
     def getUserWithGroups(appKey, token):
         return AuthCache.getUserInfo(appKey, token, getGroups=True)
-    
+
     @staticmethod
     def getUserInfo(appKey, token, getGroups=False):
         with AuthCache.userLock:
@@ -791,10 +797,10 @@ class AuthCache:
                     AuthCache.cache[token] = AuthCache.__authRecord(appKey, token, getGroups)
             else:
                 AuthCache.cache[token] = AuthCache.__authRecord(appKey, token, getGroups)
-            
+
             if isinstance(AuthCache.cache[token]['info'], Response):
                 return AuthCache.cache[token]['info']
-            
+
             if getGroups and "hmgroupids" not in AuthCache.cache[token]['info']:
                 AuthCache.cache[token] = AuthCache.__authRecord(appKey, token, getGroups)
 
@@ -807,8 +813,8 @@ class AuthCache:
         info = AuthCache.__userInfo(appKey, token, getGroups)
         rVal['info'] = info
         rVal['timestamp'] = now
-        
-        if isinstance(rVal['info'], Response):        
+
+        if isinstance(rVal['info'], Response):
             rVal['valid'] = False
         elif not 'active' in info or info['active'] is None:
             rVal['valid'] = False
@@ -817,7 +823,7 @@ class AuthCache:
 
         if rVal['valid'] and 'scope' in info and not string_helper.isBlank(info['scope']):
             info['hmscopes'] = info['scope'].lower().strip().split()
-        
+
         return rVal
 
     @staticmethod
@@ -885,7 +891,7 @@ class AuthCache:
             for grp in jsonResp:
                 if 'id' in grp:
                     ids.append(grp['id'])
-                                
+
             return ids
         except Exception as e:
             return Response("unable to get groups from Groups api while gathering user groups\n" + str(e), 500)
@@ -937,7 +943,7 @@ class AuthCache:
             else:
                 return Response("Non-active login", 401)
         except Exception as e:
-            print("ERROR!: " + str(e))            
+            print("ERROR!: " + str(e))
             return Response("Unable to parse json response on user introspect", 500)
         if not 'active' in jsonResp or not jsonResp['active']:
             return Response("Login session not active.", 401)
@@ -951,4 +957,4 @@ if __name__ == "__main__":
     token = ''
     helper = AuthHelper.configured_instance(clientId, clientSecret)
     print(helper.get_user_write_groups(token))
-    
+
