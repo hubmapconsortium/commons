@@ -400,6 +400,6 @@
 		"group_type": "senotype-edit",
 		"generateuuid": true,
 		"data_provider": false,
-		"uuid-write": true
+		"uuid_write": true
 	}
 ]
