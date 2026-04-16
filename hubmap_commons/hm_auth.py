@@ -341,8 +341,7 @@ class AuthHelper:
         # loop through all groups that a user is a member of and if any of these groups has "uuid_write" set to true, the user has write privs
         groups_by_id = self.getHMGroupsById()
         for grp_id in user_info['hmgroupids']:
-            if grp_id in groups_by_id and 'uuid_write' in groups_by_id[grp_id] and groups_by_id[grp_id][
-                'uuid_write'] == True:
+            if grp_id in groups_by_id and 'uuid_write' in groups_by_id[grp_id] and groups_by_id[grp_id]['uuid_write'] == True:
                 return True
 
         return False
