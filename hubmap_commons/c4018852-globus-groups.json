@@ -300,7 +300,7 @@
 		"uuid": "f6282165-23a8-11ed-a322-39992a34a522",
 		"group_type": "regular",
 		"name": "SenNet TMC UCSD",
-		"displayname": "TMC - University of California San Diego",
+		"displayname": "TMC - Sanford Burnham Prebys and UCSD",
 		"shortname": "TMC - UCSD",
 		"generateuuid": true,
 		"tmc_prefix": "UCSD"
