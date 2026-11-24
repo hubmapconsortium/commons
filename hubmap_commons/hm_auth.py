@@ -292,7 +292,7 @@ class AuthHelper:
     def check_write_privs(self, groups_token, group_uuid):
         user_info = self.getUserInfo(groups_token, getGroups=True)
         if isinstance(user_info, Response):
-            raise HTTPException(user_info.text, user_info.status_code)
+            raise HTTPException(user_info.get_data(as_text=True), user_info.status_code)
 
         groups_by_id = self.getHMGroupsById()
         if not group_uuid in groups_by_id:
